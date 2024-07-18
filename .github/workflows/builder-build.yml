@@ -83,6 +83,7 @@ jobs:
           build-args: |
             "AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}"
           tags: "${{ steps.meta-builder.outputs.tags }}"
+          load: true
           # push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -91,10 +92,12 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
+          # platforms: linux/amd64,linux/arm64
           target: autoware-builder-with-cache
           build-args: |
             "AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}"
           tags: "${{ steps.meta-builder-with-cache.outputs.tags }}"
+          load: true
           # push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
