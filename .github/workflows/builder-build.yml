@@ -96,5 +96,6 @@ jobs:
             "AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}"
           tags: "${{ steps.meta-builder-with-cache.outputs.tags }}"
           # push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
+            type=gha
