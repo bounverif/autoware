@@ -78,6 +78,7 @@ jobs:
       - name: Build builder image
         uses: docker/build-push-action@v6
         with:
+          # platforms: linux/amd64,linux/arm64
           context: .
           target: autoware-builder
           build-args: |
@@ -91,8 +92,8 @@ jobs:
       - name: Build builder w/cache image
         uses: docker/build-push-action@v6
         with:
-          context: .
           # platforms: linux/amd64,linux/arm64
+          context: .
           target: autoware-builder-with-cache
           build-args: |
             "AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}"
