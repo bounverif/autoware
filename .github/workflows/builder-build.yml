@@ -75,7 +75,7 @@ jobs:
             latest=auto
             suffix=-builder-with-cache,onlatest=true
 
-      - name: Builder image
+      - name: Build builder image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -84,10 +84,8 @@ jobs:
             "AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}"
           tags: "${{ steps.meta-builder.outputs.tags }}"
           # push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
-      - name: Builder w/cache image
+      - name: Build builder w/cache image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -96,6 +94,3 @@ jobs:
             "AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}"
           tags: "${{ steps.meta-builder-with-cache.outputs.tags }}"
           # push: true
-          cache-from: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
-            type=gha
