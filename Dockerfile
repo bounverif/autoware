@@ -3,10 +3,8 @@ FROM ubuntu:22.04 AS autoware-meta
 LABEL org.opencontainers.image.vendor ="tr.edu.bogazici.cmpe.bounverif"
 LABEL org.opencontainers.image.version="0.1.0"
 LABEL org.opencontainers.image.authors="Bogazici University Verification Group"
-LABEL org.opencontainers.image.url="https://github.com/bounverif/autoware"
 LABEL org.opencontainers.image.source="https://github.com/bounverif/autoware"
 LABEL org.opencontainers.image.title="Autoware"
-
 
 FROM ubuntu:22.04 AS autoware-base
 
@@ -166,6 +164,8 @@ RUN --mount=type=cache,target=${AUTOWARE_BUILD_DIR},id=autoware-build-${AUTOWARE
 
 FROM autoware-base AS autoware-runtime
 
+# This is not complete. It is just a placeholder for the final image.
+
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
 
@@ -178,6 +178,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREF
 COPY --from=autoware-prebuilt ${AUTOWARE_INSTALL_DIR} ${AUTOWARE_INSTALL_DIR}
 
 FROM autoware-builder AS autoware-devel
+
+# This is not complete. It is just a placeholder for the final image.
 
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
