@@ -58,5 +58,6 @@ jobs:
             latest=true
             suffix=-builder-with-cache,onlatest=true
 
-      - run: echo ${{ steps.meta-builder.outputs.tags }}
-      - run: echo ${{ steps.meta-builder-with-cache.outputs.tags }}
+      - run: |
+          echo ${{ steps.meta-builder.outputs.tags }}
+          echo ${{ steps.meta-builder-with-cache.outputs.tags }}
