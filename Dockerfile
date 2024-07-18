@@ -1,7 +1,7 @@
 ARG AUTOWARE_VERSION=latest
 FROM ghcr.io/bounverif/autoware:cache-${AUTOWARE_VERSION} as autoware-buildcache
 
-FROM ubuntu:22.04 as autoware-meta
+FROM ubuntu:22.04 AS autoware-meta
 
 ARG USER=bounverif
 ARG USERGROUP=${USER}
@@ -20,7 +20,7 @@ RUN groupadd ${USERGROUP} -g ${GID} && \
     useradd -ms /bin/bash ${USER} -g ${USERGROUP} -u ${UID} && \
     printf "${USER} ALL= NOPASSWD: ALL\\n" >> /etc/sudoers
 
-FROM ubuntu:22.04 as autoware-base
+FROM ubuntu:22.04 AS autoware-base
 
 ARG TARGETARCH
 ENV ID=ubuntu
@@ -69,7 +69,7 @@ ARG CUDA_KEYRING_FILEPATH=https://developer.download.nvidia.com/compute/cuda/rep
     
 RUN wget -q ${CUDA_KEYRING_FILEPATH} && dpkg -i ${CUDA_KEYRING_PACKAGE} && rm ${CUDA_KEYRING_PACKAGE}
 
-FROM autoware-base as autoware-builder-nocuda
+FROM autoware-base AS autoware-builder-nocuda
 
 ENV AUTOWARE_SOURCE_DIR=/usr/local/src/autoware
 ENV AUTOWARE_BUILD_DIR=/tmp/build/autoware
@@ -113,7 +113,7 @@ ENV CCACHE_DIR=/var/cache/ccache
 
 RUN mkdir -p ${CCACHE_DIR} && chmod 777 ${CCACHE_DIR}
 
-FROM autoware-builder-nocuda as autoware-builder
+FROM autoware-builder-nocuda AS autoware-builder
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREFIX}/var/cache/apt \
     apt-get update && apt-get install -y --no-install-recommends \
@@ -127,7 +127,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREF
         libnvinfer-headers-plugin-dev=8.* \
         libnvparsers-dev=8.* \
         libnvonnxparsers-dev=8.* \
-    && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* 
+    && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 ENV PATH="/usr/local/cuda-12.4/bin:${PATH}"
 
@@ -155,7 +155,7 @@ ENV PATH="/usr/local/cuda-12.4/bin:${PATH}"
 # RUN --mount=type=cache,target=${CCACHE_DIR},id=autoware-cache-${AUTOWARE_VERSION},readonly \
 #     cp -r ${CCACHE_DIR} /usr/share/ccache
 
-FROM autoware-builder as autoware-builder-with-cache
+FROM autoware-builder AS autoware-builder-with-cache
 
 RUN --mount=type=cache,target=${AUTOWARE_SOURCE_DIR},id=autoware-src-${AUTOWARE_VERSION},readonly \
     --mount=type=cache,target=${AUTOWARE_BUILD_DIR},id=autoware-build-${AUTOWARE_VERSION} \
@@ -172,7 +172,7 @@ RUN --mount=type=cache,target=${AUTOWARE_SOURCE_DIR},id=autoware-src-${AUTOWARE_
             " --no-warn-unused-cli" \
     && ccache -v --show-stats
 
-FROM autoware-builder-with-cache as autoware-prebuilt
+FROM autoware-builder-with-cache AS autoware-prebuilt
 
 RUN --mount=type=cache,target=${AUTOWARE_SOURCE_DIR},id=autoware-src-${AUTOWARE_VERSION},readonly \
     --mount=type=cache,target=${AUTOWARE_BUILD_DIR},id=autoware-build-${AUTOWARE_VERSION} \
@@ -190,7 +190,7 @@ RUN --mount=type=cache,target=${AUTOWARE_SOURCE_DIR},id=autoware-src-${AUTOWARE_
             " --no-warn-unused-cli" \
     && ccache -v --show-stats
 
-FROM autoware-base as autoware-runtime
+FROM autoware-base AS autoware-runtime
 
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
@@ -203,7 +203,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREF
 
 COPY --from=autoware-prebuilt ${AUTOWARE_INSTALL_DIR} ${AUTOWARE_INSTALL_DIR}
 
-FROM autoware-builder as autoware-devel
+FROM autoware-builder AS autoware-devel
 
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
