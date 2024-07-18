@@ -63,7 +63,7 @@ jobs:
             suffix=-builder-with-cache,onlatest=true
 
       - run: |
-          echo "$AUTOWARE_VERSION}"
+          echo $AUTOWARE_VERSION
           echo "${{ steps.meta-builder.outputs.tags }}"
           echo "${{ steps.meta-builder-with-cache.outputs.tags }}"
 
