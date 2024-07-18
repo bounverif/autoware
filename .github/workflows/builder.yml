@@ -12,6 +12,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: bounverif/autoware
+  AUTOWARE_VERSION: latest
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -36,6 +37,9 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Set current date as the version
+        run: echo "AUTOWARE_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
+
       - name: Docker meta
         id: meta-builder
         uses: docker/metadata-action@v4
@@ -44,7 +48,7 @@ jobs:
           tags: |
             type=raw,value={{date 'YYYYMMDD'}}
           flavor: |
-            latest=true
+            latest=auto
             suffix=-builder,onlatest=true
 
       - name: Docker meta
@@ -55,9 +59,34 @@ jobs:
           tags: |
             type=raw,value={{date 'YYYYMMDD'}}
           flavor: |
-            latest=true
+            latest=auto
             suffix=-builder-with-cache,onlatest=true
 
       - run: |
+          echo "${env.AUTOWARE_VERSION}"
           echo "${{ steps.meta-builder.outputs.tags }}"
           echo "${{ steps.meta-builder-with-cache.outputs.tags }}"
+
+      # - name: Builder image
+      #   uses: docker/build-push-action@v6
+      #   with:
+      #     context: .
+      #     target: autoware-builder
+      #     build-args: |
+      #       "AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}"
+      #     tags: "${{ steps.meta-builder.outputs.tags }}"
+      #     push: true
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
+
+      # - name: Builder w/cache image
+      #   uses: docker/build-push-action@v6
+      #   with:
+      #     context: .
+      #     target: autoware-builder-with-cache
+      #     build-args: |
+      #       "AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}"
+      #     tags: "${{ steps.meta-builder-with-cache.outputs.tags }}"
+      #     push: true
+      #     cache-from: type=gha
+      #     cache-to: type=gha,mode=max
