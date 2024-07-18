@@ -7,7 +7,7 @@ on:
     paths:
       - Dockerfile
       - autoware.repos.yml
-      - .github/workflows/builder.yml # Self-trigger 
+      - .github/workflows/builder-build.yml # Self-trigger 
 
 env:
   REGISTRY: ghcr.io
