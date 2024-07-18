@@ -84,6 +84,8 @@ jobs:
             "AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}"
           tags: "${{ steps.meta-builder.outputs.tags }}"
           # push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Build builder w/cache image
         uses: docker/build-push-action@v6
@@ -94,3 +96,5 @@ jobs:
             "AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}"
           tags: "${{ steps.meta-builder-with-cache.outputs.tags }}"
           # push: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
