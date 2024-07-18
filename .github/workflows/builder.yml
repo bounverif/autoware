@@ -44,7 +44,7 @@ jobs:
           tags: |
             type=raw,value={{date 'YYYYMMDD'}}
           flavor: |
-            latest=true,
+            latest=true
             suffix=-builder,onlatest=true
 
       - name: Docker meta
