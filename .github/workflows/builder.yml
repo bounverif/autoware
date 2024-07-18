@@ -37,15 +37,26 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Docker meta
-        id: meta
+        id: meta-builder
         uses: docker/metadata-action@v4
         with:
           images: ghcr.io/bounverif/autoware
           tags: |
             type=raw,value={{date 'YYYYMMDD'}}
           flavor: |
-            latest=auto
-            suffix=builder
+            latest=true,
+            suffix=-builder,onlatest=true
 
-      - run: echo ${{ steps.meta.outputs.tags }}
-      
+      - name: Docker meta
+        id: meta-builder-with-cache
+        uses: docker/metadata-action@v4
+        with:
+          images: ghcr.io/bounverif/autoware
+          tags: |
+            type=raw,value={{date 'YYYYMMDD'}}
+          flavor: |
+            latest=true
+            suffix=-builder-with-cache,onlatest=true
+
+      - run: echo ${{ steps.meta-builder.outputs.tags }}
+      - run: echo ${{ steps.meta-builder-with-cache.outputs.tags }}
