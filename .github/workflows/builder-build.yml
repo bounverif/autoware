@@ -35,6 +35,8 @@ jobs:
           remove-codeql: 'true'
           remove-docker-images: 'true'
           build-mount-path: '/var/lib/docker'
+      - name: Restart docker
+        run: sudo service docker restart
 
       - name: Checkout repository
         uses: actions/checkout@v4
