@@ -56,7 +56,6 @@ jobs:
       - name: Build builder image
         uses: docker/build-push-action@v6
         with:
-          # platforms: linux/amd64,linux/arm64
           context: .
           target: autoware-builder
           build-args: |
@@ -64,24 +63,20 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
           load: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-builder
+          cache-to: type=inline
 
       - name: Build builder w/cache image
         uses: docker/build-push-action@v6
         with:
-          # platforms: linux/amd64,linux/arm64
           context: .
           target: autoware-builder-with-cache
           build-args: |
             "AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}"
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-builder-with-cache
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder-with-cache
           load: true
-          # push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
 
       # Push the builder image to the registry
       - name: Push builder image
@@ -94,4 +89,16 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-builder
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
+          push: true
+
+      - name: Push builder-with-cache image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: autoware-builder-with-cache
+          build-args: |
+            "AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}"
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-builder-with-cache
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder-with-cache
           push: true
