@@ -62,10 +62,8 @@ jobs:
           build-args: |
             "AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}"
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-builder
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
           load: true
-          # push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -84,3 +82,16 @@ jobs:
           # push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # Push the builder image to the registry
+      - name: Push builder image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: autoware-builder
+          build-args: |
+            "AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}"
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-builder
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
+          push: true
