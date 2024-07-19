@@ -29,13 +29,13 @@ jobs:
       - name: Maximize build space
         uses: easimon/maximize-build-space@v10
         with:
-          root-reserve-mb: 2048
+          root-reserve-mb: 2048 # Reserve disk space for repository
           remove-dotnet: 'true'
           remove-android: 'true'
           remove-haskell: 'true'
           remove-codeql: 'true'
           remove-docker-images: 'true'
-          build-mount-path: '/var/lib/docker'
+          build-mount-path: '/var/lib/docker' # The remaining space only for Docker
       - name: Restart docker
         run: sudo service docker restart
 
@@ -53,28 +53,6 @@ jobs:
       - name: Set current date as the version
         run: echo "AUTOWARE_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
-      - name: Docker meta
-        id: meta-builder
-        uses: docker/metadata-action@v4
-        with:
-          images: ghcr.io/bounverif/autoware
-          tags: |
-            type=raw,value={{date 'YYYYMMDD'}}
-          flavor: |
-            latest=auto
-            suffix=-builder,onlatest=true
-
-      - name: Docker meta
-        id: meta-builder-with-cache
-        uses: docker/metadata-action@v4
-        with:
-          images: ghcr.io/bounverif/autoware
-          tags: |
-            type=raw,value={{date 'YYYYMMDD'}}
-          flavor: |
-            latest=auto
-            suffix=-builder-with-cache,onlatest=true
-
       - name: Build builder image
         uses: docker/build-push-action@v6
         with:
@@ -83,7 +61,9 @@ jobs:
           target: autoware-builder
           build-args: |
             "AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}"
-          tags: "${{ steps.meta-builder.outputs.tags }}"
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-builder
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
           load: true
           # push: true
           cache-from: type=gha
@@ -97,7 +77,9 @@ jobs:
           target: autoware-builder-with-cache
           build-args: |
             "AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}"
-          tags: "${{ steps.meta-builder-with-cache.outputs.tags }}"
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-builder-with-cache
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder-with-cache
           load: true
           # push: true
           cache-from: type=gha

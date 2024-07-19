@@ -1,11 +1,3 @@
-FROM ubuntu:22.04 AS autoware-meta
-
-LABEL org.opencontainers.image.vendor ="tr.edu.bogazici.cmpe.bounverif"
-LABEL org.opencontainers.image.version="0.1.0"
-LABEL org.opencontainers.image.authors="Bogazici University Verification Group"
-LABEL org.opencontainers.image.source="https://github.com/bounverif/autoware"
-LABEL org.opencontainers.image.title="Autoware"
-
 FROM ubuntu:22.04 AS autoware-base
 
 ARG TARGETARCH
@@ -13,6 +5,13 @@ ENV ID=ubuntu
 ENV VERSION_ID=22.04
 ENV CACHEMOUNT_PREFIX=/${TARGETARCH}/${ID}${VERSION_ID}
 ENV DEBIAN_FRONTEND=noninteractive
+
+# Metadata
+LABEL org.opencontainers.image.vendor="tr.edu.bogazici.cmpe.bounverif"
+LABEL org.opencontainers.image.version="0.1.0"
+LABEL org.opencontainers.image.authors="Bogazici University System Verification Group"
+LABEL org.opencontainers.image.source="https://github.com/bounverif/autoware"
+LABEL org.opencontainers.image.title="Autoware"
 
 # Autoware variables
 ARG AUTOWARE_VERSION=latest
@@ -134,7 +133,7 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
         --base-paths ${AUTOWARE_SOURCE_DIR} \
         --build-base ${AUTOWARE_BUILD_DIR} \
         --packages-up-to autoware_launch \
-        --event-handlers console_cohesion+ console_package_list+ desktop_notification-\
+        --event-handlers console_cohesion+ console_package_list+ summary- desktop_notification-\
         --cmake-args \
             -DCMAKE_BUILD_TYPE=Release \
             " -Wno-dev" \
@@ -155,7 +154,7 @@ RUN --mount=type=cache,target=${AUTOWARE_BUILD_DIR},id=autoware-build-${AUTOWARE
         --build-base ${AUTOWARE_BUILD_DIR} \
         --install-base ${AUTOWARE_INSTALL_DIR} \
         --packages-up-to autoware_launch \
-        --event-handlers console_cohesion+ console_package_list+ desktop_notification-\
+        --event-handlers console_cohesion+ console_package_list+ summary- desktop_notification-\
         --cmake-args \
             -DCMAKE_BUILD_TYPE=Release \
             " -Wno-dev" \
