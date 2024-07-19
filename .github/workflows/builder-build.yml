@@ -76,7 +76,10 @@ jobs:
           tags: |
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder-with-cache
           load: true
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
+          cache-from: |
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder-builder-with-cache
+          cache-to: type=inline
 
       # Push the builder image to the registry
       - name: Push builder image
@@ -90,6 +93,7 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-builder
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
           push: true
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-builder
 
       - name: Push builder-with-cache image
         uses: docker/build-push-action@v6
@@ -102,3 +106,6 @@ jobs:
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-builder-with-cache
             ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder-with-cache
           push: true
+          cache-from: |
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
+            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder-builder-with-cache

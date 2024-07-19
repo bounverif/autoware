@@ -133,7 +133,14 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
         --base-paths ${AUTOWARE_SOURCE_DIR} \
         --build-base ${AUTOWARE_BUILD_DIR} \
         --packages-up-to autoware_launch \
-        --event-handlers console_cohesion+ console_package_list+ summary- desktop_notification-\
+        --event-handlers \
+            console_direct- \
+            console_cohesion- \
+            console_start_end- \
+            console_package_list- \
+            status+ \
+            summary- \
+            desktop_notification- \
         --cmake-args \
             -DCMAKE_BUILD_TYPE=Release \
             " -Wno-dev" \
@@ -154,7 +161,14 @@ RUN --mount=type=cache,target=${AUTOWARE_BUILD_DIR},id=autoware-build-${AUTOWARE
         --build-base ${AUTOWARE_BUILD_DIR} \
         --install-base ${AUTOWARE_INSTALL_DIR} \
         --packages-up-to autoware_launch \
-        --event-handlers console_cohesion+ console_package_list+ summary- desktop_notification-\
+        --event-handlers \
+            console_direct- \
+            console_cohesion- \
+            console_start_end- \
+            console_package_list- \
+            status+ \
+            summary- \
+            desktop_notification- \
         --cmake-args \
             -DCMAKE_BUILD_TYPE=Release \
             " -Wno-dev" \
