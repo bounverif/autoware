@@ -131,11 +131,10 @@ FROM autoware-builder AS autoware-builder-with-cache
 #
 RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=${AUTOWARE_SOURCE_DIR} \
     . /opt/ros/humble/setup.sh && \
-    colcon build \
+    colcon --log-base /dev/null build \
         --base-paths ${AUTOWARE_SOURCE_DIR} \
         --build-base ${AUTOWARE_BUILD_DIR} \
         --install-base /dev/null \
-        --log-base /dev/null \
         --packages-up-to autoware_launch \
         --event-handlers \
             console_direct- \
@@ -165,11 +164,10 @@ RUN mkdir -p ${AUTOWARE_SOURCE_DIR} && vcs import --shallow ${AUTOWARE_SOURCE_DI
 
 RUN ccache --zero-stats && \
     . /opt/ros/humble/setup.sh && \
-    colcon build \
+    colcon --log-base /dev/null build \
         --base-paths ${AUTOWARE_SOURCE_DIR} \
         --build-base ${AUTOWARE_BUILD_DIR} \
         --install-base ${AUTOWARE_INSTALL_DIR} \
-        --log-base /dev/null \
         --packages-up-to autoware_launch \
         --event-handlers \
             console_direct- \
