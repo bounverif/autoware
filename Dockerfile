@@ -134,7 +134,7 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
     colcon --log-base /dev/null build \
         --base-paths ${AUTOWARE_SOURCE_DIR} \
         --build-base ${AUTOWARE_BUILD_DIR} \
-        --install-base /dev/null \
+        --install-base ${AUTOWARE_INSTALL_DIR} \
         --packages-up-to autoware_launch \
         --event-handlers \
             console_direct- \
@@ -149,6 +149,8 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
             -DCMAKE_BUILD_TYPE=Release \
             " -Wno-dev" \
             " --no-warn-unused-cli" \
+    && rm -rf ${AUTOWARE_BUILD_DIR} \
+    && rm -rf ${AUTOWARE_INSTALL_DIR} \
     && du -h --max-depth=0 ${CCACHE_DIR}
 
 USER bounverif
@@ -160,9 +162,8 @@ USER root
 
 COPY autoware.repos.yml /var/lib/autoware/autoware.repos.${AUTOWARE_VERSION}.yml
 
-RUN mkdir -p ${AUTOWARE_SOURCE_DIR} && vcs import --shallow ${AUTOWARE_SOURCE_DIR} < /var/lib/autoware/autoware.repos.${AUTOWARE_VERSION}.yml
-
-RUN ccache --zero-stats && \
+RUN mkdir -p ${AUTOWARE_SOURCE_DIR} && vcs import --shallow ${AUTOWARE_SOURCE_DIR} < /var/lib/autoware/autoware.repos.${AUTOWARE_VERSION}.yml \
+    ccache --zero-stats && \
     . /opt/ros/humble/setup.sh && \
     colcon --log-base /dev/null build \
         --base-paths ${AUTOWARE_SOURCE_DIR} \
@@ -182,6 +183,8 @@ RUN ccache --zero-stats && \
             -DCMAKE_BUILD_TYPE=Release \
             " -Wno-dev" \
             " --no-warn-unused-cli" \
+    && rm -rf ${AUTOWARE_SOURCE_DIR} \
+    && rm -rf ${AUTOWARE_BUILD_DIR} \
     && ccache -v --show-stats
     
 USER bounverif
