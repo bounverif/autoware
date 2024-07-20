@@ -153,12 +153,7 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
     && rm -rf ${AUTOWARE_INSTALL_DIR} \
     && du -h --max-depth=0 ${CCACHE_DIR}
 
-USER bounverif
-WORKDIR /home/bounverif
-
 FROM autoware-builder-with-cache AS autoware-prebuilt
-
-USER root
 
 COPY autoware.repos.yml /var/lib/autoware/autoware.repos.${AUTOWARE_VERSION}.yml
 
@@ -186,9 +181,6 @@ RUN mkdir -p ${AUTOWARE_SOURCE_DIR} && vcs import --shallow ${AUTOWARE_SOURCE_DI
     && rm -rf ${AUTOWARE_SOURCE_DIR} \
     && rm -rf ${AUTOWARE_BUILD_DIR} \
     && ccache -v --show-stats
-    
-USER bounverif
-WORKDIR /home/bounverif
 
 FROM autoware-base AS autoware-runtime
 
