@@ -125,55 +125,69 @@ ENV PATH="/usr/local/cuda-12.4/bin:${PATH}"
 
 FROM autoware-builder AS autoware-builder-with-cache
 
+#
+# This build is only for producing a build cache to be saved in the image.
+# Hence, we do not want build artifacts and logs.
+#
 RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=${AUTOWARE_SOURCE_DIR} \
-    --mount=type=cache,target=${AUTOWARE_BUILD_DIR},id=autoware-build-${AUTOWARE_VERSION} \
-    ccache --zero-stats && \
     . /opt/ros/humble/setup.sh && \
     colcon build \
         --base-paths ${AUTOWARE_SOURCE_DIR} \
         --build-base ${AUTOWARE_BUILD_DIR} \
+        --install-base /dev/null \
+        --log-base /dev/null \
         --packages-up-to autoware_launch \
         --event-handlers \
             console_direct- \
+            console_stderr+ \
             console_cohesion- \
             console_start_end- \
             console_package_list- \
-            status+ \
-            summary- \
+            status- \
+            summary+ \
             desktop_notification- \
         --cmake-args \
             -DCMAKE_BUILD_TYPE=Release \
             " -Wno-dev" \
             " --no-warn-unused-cli" \
-    && ccache -v --show-stats
+    && du -h --max-depth=0 ${CCACHE_DIR}
+
+USER bounverif
+WORKDIR /home/bounverif
 
 FROM autoware-builder-with-cache AS autoware-prebuilt
+
+USER root
 
 COPY autoware.repos.yml /var/lib/autoware/autoware.repos.${AUTOWARE_VERSION}.yml
 
 RUN mkdir -p ${AUTOWARE_SOURCE_DIR} && vcs import --shallow ${AUTOWARE_SOURCE_DIR} < /var/lib/autoware/autoware.repos.${AUTOWARE_VERSION}.yml
 
-RUN --mount=type=cache,target=${AUTOWARE_BUILD_DIR},id=autoware-build-${AUTOWARE_VERSION} \
-    ccache --zero-stats && \
+RUN ccache --zero-stats && \
     . /opt/ros/humble/setup.sh && \
     colcon build \
         --base-paths ${AUTOWARE_SOURCE_DIR} \
         --build-base ${AUTOWARE_BUILD_DIR} \
         --install-base ${AUTOWARE_INSTALL_DIR} \
+        --log-base /dev/null \
         --packages-up-to autoware_launch \
         --event-handlers \
             console_direct- \
+            console_stderr+ \
             console_cohesion- \
             console_start_end- \
             console_package_list- \
-            status+ \
-            summary- \
+            status- \
+            summary+ \
             desktop_notification- \
         --cmake-args \
             -DCMAKE_BUILD_TYPE=Release \
             " -Wno-dev" \
             " --no-warn-unused-cli" \
     && ccache -v --show-stats
+    
+USER bounverif
+WORKDIR /home/bounverif
 
 FROM autoware-base AS autoware-runtime
 
