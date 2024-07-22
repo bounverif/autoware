@@ -61,8 +61,6 @@ jobs:
           extra-args:
             --target autoware-builder
             --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/builder-cache
-            --cache-to=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/builder-cache
-            --cache-ttl=24h
           containerfiles: |
             ./Dockerfile
 
