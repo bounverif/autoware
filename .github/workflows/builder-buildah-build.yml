@@ -59,7 +59,8 @@ jobs:
             AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
           extra-args:
             --target autoware-builder
-            --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
+            --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            --cache-to=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
             --cache-ttl 1d
           containerfiles: |
             ./Dockerfile
@@ -76,7 +77,8 @@ jobs:
             AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
           extra-args:
             --target autoware-builder-with-cache
-            --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
+            --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            --cache-to=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           containerfiles: |
             ./Dockerfile
 
@@ -94,6 +96,7 @@ jobs:
           registry: ${{ env.REGISTRY }}
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
+          extra-args: |
 
       - name: Print image url
         run: echo "Image pushed to ${{ steps.push-builder-ghcr.outputs.registry-paths }}"
