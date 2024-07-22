@@ -42,6 +42,8 @@ jobs:
 
       - run: whoami && id -u && id -g
 
+      - run: buildah info
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
