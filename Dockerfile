@@ -101,8 +101,8 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
     export DEBIAN_FRONTEND=noninteractive && \
     apt update && \
     rosdep init && \
-    rosdep update && \
-    rosdep install -y \
+    rosdep update -q && \
+    rosdep install -qy \
         --from-paths ${AUTOWARE_SOURCE_DIR} \
         --ignore-src \
         --rosdistro humble \

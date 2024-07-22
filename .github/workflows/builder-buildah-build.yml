@@ -60,7 +60,8 @@ jobs:
             AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
           extra-args:
             --target autoware-builder
-            --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/builder-cache
+            --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/autoware-cache
+            --cache-to=${{ env.REGISTRY }}/bounverif/autoware-cache
           containerfiles: |
             ./Dockerfile
 
@@ -77,8 +78,8 @@ jobs:
             AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
           extra-args:
             --target autoware-builder-with-cache
-            --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/builder-cache
-            --cache-to=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/builder-cache
+            --cache-from=${{ env.REGISTRY }}/bounverif/autoware-cache
+            --cache-to=${{ env.REGISTRY }}/bounverif/autoware-cache
           containerfiles: |
             ./Dockerfile
 
