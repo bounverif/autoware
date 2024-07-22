@@ -53,13 +53,29 @@ jobs:
         with:
           platforms: linux/amd64
           image: ${{ env.IMAGE_NAME }}
-          tags: ${{ env.AUTOWARE_VERSION }}-builder latest
+          tags: ${{ env.AUTOWARE_VERSION }}-builder latest-builder
           oci: true
-          cache-from: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
           build-args: |
             AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
           extra-args:
             --target autoware-builder
+            --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
+            --cache-ttl 1d
+          containerfiles: |
+            ./Dockerfile
+
+      - name: Build builder-with-cache container image
+        id: build-builder-with-cache
+        uses: redhat-actions/buildah-build@v2
+        with:
+          platforms: linux/amd64
+          image: ${{ env.IMAGE_NAME }}
+          tags: ${{ env.AUTOWARE_VERSION }}-builder-with-cache latest-with-cache
+          oci: true
+          build-args: |
+            AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
+          extra-args:
+            --target autoware-builder-with-cache
             --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
           containerfiles: |
             ./Dockerfile
