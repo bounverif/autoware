@@ -36,7 +36,7 @@ jobs:
           remove-haskell: 'true'
           remove-codeql: 'true'
           remove-docker-images: 'true'
-          build-mount-path: '/var/lib/' # The remaining space only for container build
+          build-mount-path: '/' # The remaining space only for container build
 
       - run: mkdir -p $TMPDIR
 
