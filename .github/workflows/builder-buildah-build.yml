@@ -47,6 +47,13 @@ jobs:
       - name: Set current date as the version
         run: echo "AUTOWARE_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
+      - name: Log in to the GitHub Container registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build builder container image
         id: build-builder
         uses: redhat-actions/buildah-build@v2
@@ -60,8 +67,8 @@ jobs:
             AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
           extra-args:
             --target autoware-builder
-            --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/autoware-cache
-            --cache-to=${{ env.REGISTRY }}/bounverif/autoware-cache
+            --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/cache
+            --cache-to=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/cache
           containerfiles: |
             ./Dockerfile
 
@@ -78,17 +85,10 @@ jobs:
             AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
           extra-args:
             --target autoware-builder-with-cache
-            --cache-from=${{ env.REGISTRY }}/bounverif/autoware-cache
-            --cache-to=${{ env.REGISTRY }}/bounverif/autoware-cache
+            --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/cache
+            --cache-to=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/cache
           containerfiles: |
             ./Dockerfile
-
-      - name: Log in to the GitHub Container registry
-        uses: redhat-actions/podman-login@v1
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push to GitHub Container Repository
         id: push-builder-ghcr
