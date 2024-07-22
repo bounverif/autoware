@@ -36,7 +36,9 @@ ARG CUDA_KEYRING_FILEPATH=https://developer.download.nvidia.com/compute/cuda/rep
 RUN rm -f /etc/apt/apt.conf.d/docker-clean
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREFIX}/var/cache/apt \
-    apt-get update && apt-get install -y --no-install-recommends \
+    export DEBIAN_FRONTEND=noninteractive && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
         sudo \
         tini \
         wget \
@@ -64,7 +66,9 @@ RUN wget -qO- "https://keyserver.ubuntu.com/pks/lookup?fingerprint=on&op=get&sea
 FROM autoware-base AS autoware-source
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREFIX}/var/cache/apt \
-    apt-get update && apt-get install -y --no-install-recommends \
+    export DEBIAN_FRONTEND=noninteractive && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
         git \
         python3-minimal \
         python3-vcstool \
@@ -77,7 +81,9 @@ RUN mkdir -p ${AUTOWARE_SOURCE_DIR} && vcs import --shallow ${AUTOWARE_SOURCE_DI
 FROM autoware-base AS autoware-builder-nocuda
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREFIX}/var/cache/apt \
-    apt-get update && apt-get install -y --no-install-recommends \
+    export DEBIAN_FRONTEND=noninteractive && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
         build-essential \
         git \
         cmake \
@@ -92,7 +98,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREF
 
 RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=${AUTOWARE_SOURCE_DIR} \
     --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREFIX}/var/cache/apt \
-    rosdep init && apt update && rosdep update && \
+    export DEBIAN_FRONTEND=noninteractive && \
+    apt update && \
+    rosdep init && \
+    rosdep update && \
     rosdep install -y \
         --from-paths ${AUTOWARE_SOURCE_DIR} \
         --ignore-src \
@@ -111,6 +120,7 @@ RUN mkdir -p ${CCACHE_DIR} && chmod 777 ${CCACHE_DIR}
 FROM autoware-builder-nocuda AS autoware-builder
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREFIX}/var/cache/apt \
+    export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && apt-get install -y --no-install-recommends \
         cuda-minimal-build-12-4 \
         libcublas-dev-12-4 \
@@ -193,6 +203,7 @@ ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREFIX}/var/cache/apt \
+    export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && apt-get install -y --no-install-recommends \
         libcublas-12-4 \
         libcurand-12-4 \
