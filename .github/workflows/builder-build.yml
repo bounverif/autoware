@@ -24,7 +24,7 @@ permissions:
 
 jobs:
   autoware-builder-build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Maximize build space
         uses: easimon/maximize-build-space@v10
