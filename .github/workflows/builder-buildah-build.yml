@@ -40,7 +40,7 @@ jobs:
 
       - run: mkdir -p $TMPDIR
 
-      - run: whoami && uid && gid
+      - run: whoami && id -u && id -g
 
       - name: Checkout repository
         uses: actions/checkout@v4
