@@ -48,12 +48,13 @@ jobs:
         run: echo "AUTOWARE_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
       - name: Build builder container image
-        id: build-image
+        id: build-builder
         uses: redhat-actions/buildah-build@v2
         with:
           platforms: linux/amd64
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ env.AUTOWARE_VERSION }}-builder latest-builder
+          layers: true
           oci: true
           build-args: |
             AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
@@ -71,7 +72,8 @@ jobs:
         with:
           platforms: linux/amd64
           image: ${{ env.IMAGE_NAME }}
-          tags: ${{ env.AUTOWARE_VERSION }}-builder-with-cache latest-with-cache
+          tags: ${{ env.AUTOWARE_VERSION }}-builder-with-cache latest-builder-with-cache
+          layers: true
           oci: true
           build-args: |
             AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
@@ -94,9 +96,16 @@ jobs:
         uses: redhat-actions/push-to-registry@v2
         with:
           registry: ${{ env.REGISTRY }}
-          image: ${{ steps.build-image.outputs.image }}
-          tags: ${{ steps.build-image.outputs.tags }}
-          extra-args: |
+          image: ${{ steps.build-builder.outputs.image }}
+          tags: ${{ steps.build-builder.outputs.tags }}
+
+      - name: Push to GitHub Container Repository
+        id: push-builder-with-cache-ghcr
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          image: ${{ steps.build-builder-with-cache.outputs.image }}
+          tags: ${{ steps.build-builder-with-cache.outputs.tags }}
 
       - name: Print image url
         run: echo "Image pushed to ${{ steps.push-builder-ghcr.outputs.registry-paths }}"
