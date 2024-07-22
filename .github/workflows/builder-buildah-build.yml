@@ -13,7 +13,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: bounverif/autoware
   AUTOWARE_VERSION: latest
-  TMPDIR: /var/lib/containers/tmp
+  TMPDIR: /home/runner/.local/share/containers/tmp
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -36,7 +36,7 @@ jobs:
           remove-haskell: 'true'
           remove-codeql: 'true'
           remove-docker-images: 'true'
-          build-mount-path: '/home/runner/.local/share/containers/storage' # The remaining space only for container build
+          build-mount-path: '/home/runner/.local/share/containers' # The remaining space only for container build
 
       - run: mkdir -p $TMPDIR
       - run: whoami && id -u && id -g
