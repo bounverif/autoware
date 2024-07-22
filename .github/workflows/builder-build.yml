@@ -35,7 +35,8 @@ jobs:
           remove-haskell: 'true'
           remove-codeql: 'true'
           remove-docker-images: 'true'
-          build-mount-path: '/var/lib/docker' # The remaining space only for Docker
+          build-mount-path: '/var/lib/containers' # The remaining space only for Docker
+
       - name: Restart docker
         run: sudo service docker restart
 
