@@ -52,7 +52,7 @@ jobs:
 
       - name: Build builder image
         run: |
-          TMPDIR=${{env.TMPDIR}} /usr/bin/buildah bud .
+          /usr/bin/buildah bud .
             --platform linux/amd64 
             -f ./Dockerfile 
             --build-arg AUTOWARE_VERSION=20240722 
