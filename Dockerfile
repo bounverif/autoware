@@ -1,6 +1,9 @@
-FROM ubuntu:22.04 AS autoware-base
+FROM docker.io/library/ubuntu:22.04 AS autoware-base
 
-ARG TARGETARCH
+ARG TARGETARCH=amd64
+ARG TARGETOS=linux
+ARG TARGETPLATFORM=linux/amd64
+
 ENV ID=ubuntu
 ENV VERSION_ID=22.04
 ENV CACHEMOUNT_PREFIX=/${TARGETARCH}/${ID}${VERSION_ID}

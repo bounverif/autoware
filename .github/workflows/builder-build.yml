@@ -53,6 +53,7 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ env.AUTOWARE_VERSION }}-builder latest
           layers: true
+          oci: true
           build-args: |
             AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
           extra-args:
