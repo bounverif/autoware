@@ -1,8 +1,6 @@
-name: Build Autoware builder container images
+name: Build Autoware builder container images (Docker)
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '34 15 * * 0' # 15:34 UTC every Sunday
   push:
     paths:
       - Dockerfile
@@ -10,8 +8,8 @@ on:
       - .github/workflows/builder-build.yml # Self-trigger 
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: bounverif/autoware
+  REGISTRY: ghcr.io/bounverif
+  IMAGE_NAME: autoware
   AUTOWARE_VERSION: latest
 
 concurrency:
@@ -78,34 +76,4 @@ jobs:
           load: true
           cache-from: |
             type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
-          cache-to: type=inline
-
-      - name: Push builder image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          target: autoware-builder
-          build-args: |
-            "AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}"
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-builder
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
-          push: true
-          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
-          cache-to: type=inline
-
-      - name: Push builder-with-cache image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          target: autoware-builder-with-cache
-          build-args: |
-            "AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}"
-          tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest-builder-with-cache
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder-with-cache
-          push: true
-          cache-from: |
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
-            type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder-with-cache
           cache-to: type=inline
