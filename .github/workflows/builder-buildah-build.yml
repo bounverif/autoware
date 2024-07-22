@@ -13,6 +13,7 @@ env:
   REGISTRY: ghcr.io
   IMAGE_NAME: bounverif/autoware
   AUTOWARE_VERSION: latest
+  CONTAINERS_ROOT: /home/runner/.local/share/containers
   TMPDIR: /home/runner/.local/share/containers/tmp
 
 concurrency:
@@ -36,11 +37,9 @@ jobs:
           remove-haskell: 'true'
           remove-codeql: 'true'
           remove-docker-images: 'true'
-          build-mount-path: '/home/runner/.local/share/containers' # The remaining space only for container build
+          build-mount-path: ${{ env.CONTAINERS_ROOT }} # The remaining space only for container build
 
       - run: mkdir -p $TMPDIR
-      - run: whoami && id -u && id -g
-      - run: buildah info
 
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -50,14 +49,14 @@ jobs:
 
       - name: Build builder image
         run: |
-          /usr/bin/buildah bud .
-            --platform linux/amd64 
-            -f ./Dockerfile 
-            --build-arg AUTOWARE_VERSION=20240722 
-            --format oci 
-            --tls-verify=true 
-            --layers=true 
-            --target autoware-builder 
+          buildah bud . \
+            --platform linux/amd64 \
+            -f ./Dockerfile \
+            --build-arg AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }} \
+            --format oci \
+            --cache-ttl=1d \
+            --layers=true \
+            --target autoware-builder \
             -t bounverif/autoware:${{ env.AUTOWARE_VERSION }}-builder
 
       - name: Buildah Action
