@@ -47,19 +47,7 @@ jobs:
       - name: Set current date as the version
         run: echo "AUTOWARE_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
-      - name: Build builder image
-        run: |
-          buildah bud . \
-            --platform linux/amd64 \
-            -f ./Dockerfile \
-            --build-arg AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }} \
-            --format oci \
-            --cache-ttl=1d \
-            --layers=true \
-            --target autoware-builder \
-            -t bounverif/autoware:${{ env.AUTOWARE_VERSION }}-builder
-
-      - name: Buildah Action
+      - name: Build builder container image
         id: build-image
         uses: redhat-actions/buildah-build@v2
         with:
