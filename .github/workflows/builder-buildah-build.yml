@@ -10,8 +10,8 @@ on:
       - .github/workflows/builder-buildah-build.yml # Self-trigger 
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: bounverif/autoware
+  REGISTRY: ghcr.io/bounverif
+  IMAGE_NAME: autoware
   AUTOWARE_VERSION: latest
   CONTAINERS_ROOT: /home/runner/.local/share/containers
   TMPDIR: /home/runner/.local/share/containers/tmp
@@ -55,10 +55,12 @@ jobs:
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ env.AUTOWARE_VERSION }}-builder latest
           oci: true
+          cache-from: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
           build-args: |
             AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
           extra-args:
             --target autoware-builder
+            --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.AUTOWARE_VERSION }}-builder
           containerfiles: |
             ./Dockerfile
 
