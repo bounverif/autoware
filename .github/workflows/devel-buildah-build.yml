@@ -1,5 +1,5 @@
-name: Build Autoware devel container images using Buildah
-run-name: Devel container build on ${{ github.sha }} by ${{ github.actor }}
+name: buildah-build-devel
+run-name: Autoware devel container build
 
 on:
   workflow_dispatch:
