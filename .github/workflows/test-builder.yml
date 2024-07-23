@@ -1,0 +1,25 @@
+name: Test builder image
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/test-builder.yml # Self-trigger
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/bounverif/autoware:latest-builder-with-cache
+
+    steps:
+      - name: Checkout Autoware repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'autowarefoundation/autoware'
+
+      - name: Build up to autoware_launch
+        run: |
+          mkdir -p src
+          vcs import src --shallow --input autoware.repos
+          colcon build --packages-up-to autoware_launch --cmake-args -DCMAKE_BUILD_TYPE=Release
