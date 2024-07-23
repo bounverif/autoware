@@ -45,21 +45,27 @@ jobs:
       - name: Set current date as the version
         run: echo "AUTOWARE_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
+      - name: Log in to the GitHub Container registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build builder container image
-        id: build-image
+        id: build-builder
         uses: redhat-actions/buildah-build@v2
         with:
           platforms: linux/amd64
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ env.AUTOWARE_VERSION }}-builder latest-builder
+          layers: true
           oci: true
           build-args: |
             AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
           extra-args:
             --target autoware-builder
-            --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-            --cache-to=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-            --cache-ttl=24h
+            --cache-to=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/cache
           containerfiles: |
             containers/autoware-builder/Dockerfile
 
@@ -69,33 +75,29 @@ jobs:
         with:
           platforms: linux/amd64
           image: ${{ env.IMAGE_NAME }}
-          tags: ${{ env.AUTOWARE_VERSION }}-builder-with-cache latest-with-cache
+          tags: ${{ env.AUTOWARE_VERSION }}-builder-with-cache latest-builder-with-cache
+          layers: true
           oci: true
           build-args: |
             AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
           extra-args:
             --target autoware-builder-with-cache
-            --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-            --cache-to=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+            --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/cache
           containerfiles: |
             containers/autoware-builder/Dockerfile
-
-      - name: Log in to the GitHub Container registry
-        uses: redhat-actions/podman-login@v1
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push to GitHub Container Repository
         id: push-builder-ghcr
         uses: redhat-actions/push-to-registry@v2
         with:
           registry: ${{ env.REGISTRY }}
-          image: ${{ steps.build-image.outputs.image }}
-          tags: ${{ steps.build-image.outputs.tags }}
-          extra-args: |
+          image: ${{ steps.build-builder.outputs.image }}
+          tags: ${{ steps.build-builder.outputs.tags }}
 
-      - name: Print image url
-        run: echo "Image pushed to ${{ steps.push-builder-ghcr.outputs.registry-paths }}"
-  
+      - name: Push to GitHub Container Repository
+        id: push-builder-with-cache-ghcr
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          image: ${{ steps.build-builder-with-cache.outputs.image }}
+          tags: ${{ steps.build-builder-with-cache.outputs.tags }}
