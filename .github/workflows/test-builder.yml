@@ -1,0 +1,32 @@
+name: test-builder
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/test-builder.yml # Self-trigger
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-builder-build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/bounverif/autoware:latest-builder-with-cache
+
+    steps:
+      - name: Checkout Autoware repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'autowarefoundation/autoware'
+
+      - run: env && echo $CCACHE_DIR && ls -la $CCACHE_DIR && du -h --max-depth=0 ${CCACHE_DIR}
+
+      - name: Build up to autoware_launch
+        run: |
+          mkdir -p src
+          vcs import src --shallow --input autoware.repos
+          . /opt/ros/humble/setup.sh
+          colcon build --packages-up-to autoware_launch --cmake-args -DCMAKE_BUILD_TYPE=Release
