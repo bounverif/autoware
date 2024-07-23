@@ -2,7 +2,7 @@ name: Build Autoware runtime container images using Buildah
 on:
   workflow_dispatch:
   schedule:
-    - cron: '34 15 * * 0' # 15:34 UTC every Sunday
+    - cron: '30 16 * * 1-5' # 16:30 UTC every weekday
   push:
     paths:
       - .github/workflows/runtime-buildah-build.yml # Self-trigger 

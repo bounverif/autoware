@@ -2,7 +2,7 @@ name: Build Autoware builder container images using Buildah
 on:
   workflow_dispatch:
   schedule:
-    - cron: '34 15 * * 0' # 15:34 UTC every Sunday
+    - cron: '30 12 * * 0' # 12:30 UTC every Sunday
   push:
     paths:
       - .github/workflows/builder-buildah-build.yml # Self-trigger 
