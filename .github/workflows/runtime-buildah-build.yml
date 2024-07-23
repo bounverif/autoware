@@ -69,10 +69,10 @@ jobs:
           containerfiles: |
             ./Dockerfile
 
-      # - name: Push to GitHub Container Repository
-      #   id: push-runtime-ghcr
-      #   uses: redhat-actions/push-to-registry@v2
-      #   with:
-      #     registry: ${{ env.REGISTRY }}
-      #     image: ${{ steps.build-runtime.outputs.image }}
-      #     tags: ${{ steps.build-runtime.outputs.tags }}
+      - name: Push to GitHub Container Repository
+        id: push-runtime-ghcr
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          image: ${{ steps.build-runtime.outputs.image }}
+          tags: ${{ steps.build-runtime.outputs.tags }}
