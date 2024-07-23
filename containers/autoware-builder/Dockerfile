@@ -7,7 +7,6 @@ ARG TARGETPLATFORM=linux/amd64
 ENV ID=ubuntu
 ENV VERSION_ID=22.04
 ENV CACHEMOUNT_PREFIX=/${TARGETARCH}/${ID}${VERSION_ID}
-ENV DEBIAN_FRONTEND=noninteractive
 
 # Metadata
 LABEL org.opencontainers.image.vendor="tr.edu.bogazici.cmpe.bounverif"
@@ -37,7 +36,7 @@ RUN rm -f /etc/apt/apt.conf.d/docker-clean
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREFIX}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
-    apt-get update && \
+    apt-get update -qq && \
     apt-get install -qy --no-install-recommends \
         sudo \
         tini \
@@ -57,9 +56,7 @@ RUN groupadd ${USERGROUP} -g ${GID} && \
     printf "${USER} ALL= NOPASSWD: ALL\\n" >> /etc/sudoers
 
 # Repository management
-RUN wget -qO- "https://keyserver.ubuntu.com/pks/lookup?fingerprint=on&op=get&search=0x6125E2A8C77F2818FB7BD15B93C4A3FD7BB9C367" | gpg --dearmour -o /usr/share/keyrings/ansible-archive-keyring.gpg && \
-    echo "deb [signed-by=/usr/share/keyrings/ansible-archive-keyring.gpg] http://ppa.launchpad.net/ansible/ansible/ubuntu jammy main" | tee /etc/apt/sources.list.d/ansible.list && \
-    wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" | gpg --dearmour -o /usr/share/keyrings/ros-archive-keyring.gpg && \
+RUN wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" | gpg --dearmour -o /usr/share/keyrings/ros-archive-keyring.gpg && \
     echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu jammy main" > /etc/apt/sources.list.d/ros2.list && \
     wget -q ${CUDA_KEYRING_FILEPATH} && dpkg -i ${CUDA_KEYRING_PACKAGE} && rm ${CUDA_KEYRING_PACKAGE}
 
@@ -67,7 +64,7 @@ FROM autoware-base AS autoware-source
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREFIX}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
-    apt-get update && \
+    apt-get update -qq && \
     apt-get install -y --no-install-recommends \
         git \
         python3-minimal \
@@ -82,7 +79,7 @@ FROM autoware-base AS autoware-builder-nocuda
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREFIX}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
-    apt-get update && \
+    apt-get update -qq && \
     apt-get install -y --no-install-recommends \
         build-essential \
         git \
@@ -112,8 +109,12 @@ ENV CMAKE_GENERATOR=Ninja
 
 ENV CMAKE_C_COMPILER_LAUNCHER=ccache
 ENV CMAKE_CXX_COMPILER_LAUNCHER=ccache
-
 ENV CCACHE_DIR=/var/cache/ccache
+
+# Set environment variables for all users 
+RUN printf "CMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}\\n" >> /etc/environment && \
+    printf "CMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}\\n" >> /etc/environment && \
+    printf "CCACHE_DIR=${CCACHE_DIR}\\n" >> /etc/environment
 
 RUN mkdir -p ${CCACHE_DIR} && chmod 777 ${CCACHE_DIR}
 
@@ -121,7 +122,8 @@ FROM autoware-builder-nocuda AS autoware-builder
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREFIX}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
-    apt-get update && apt-get install -y --no-install-recommends \
+    apt-get update -qq && \
+    apt-get install -qy --no-install-recommends \
         cuda-minimal-build-12-4 \
         libcublas-dev-12-4 \
         libcurand-dev-12-4 \

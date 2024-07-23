@@ -7,7 +7,7 @@ on:
       - .github/workflows/test-builder.yml # Self-trigger
 
 jobs:
-  build:
+  test-devel-build:
     runs-on: ubuntu-latest
     container:
       image: ghcr.io/bounverif/autoware:latest-builder-with-cache
