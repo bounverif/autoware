@@ -212,9 +212,23 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREF
 
 COPY --from=autoware-prebuilt ${AUTOWARE_INSTALL_DIR} ${AUTOWARE_INSTALL_DIR}
 
-FROM autoware-builder AS autoware-devel
+FROM ghcr.io/bounverif/autoware:latest-builder-with-cache AS autoware-devel
 
-# This is not complete. It is just a placeholder for the final image.
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREFIX}/var/cache/apt \
+    export DEBIAN_FRONTEND=noninteractive && \
+    apt-get update && apt-get install -y --no-install-recommends \
+        ansible-core ansible \
+    && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
+USER bounverif
+WORKDIR /home/bounverif
+
+ENV AUTOWARE_VERSION=devel
+ENV AUTOWARE_SOURCE_DIR=/home/bounverif/autoware/src
+ENV AUTOWARE_BUILD_DIR=/tmp/build/autoware
+ENV AUTOWARE_INSTALL_DIR=/home/bounverif/autoware/install
+
+ENV AUTOWARE_REPOSITORY_URL=https://github.com/autowarefoundation/autoware.git
+ENV AUTOWARE_CORE_REPOSITORY_URL=https://github.com/autowarefoundation/autoware.core.git
+ENV AUTOWARE_UNIVERSE_REPOSITORY_URL=https://github.com/autowarefoundation/autoware.universe.git
+
