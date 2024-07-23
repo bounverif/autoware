@@ -22,4 +22,5 @@ jobs:
         run: |
           mkdir -p src
           vcs import src --shallow --input autoware.repos
+          . /opt/ros/humble/setup.sh
           colcon build --packages-up-to autoware_launch --cmake-args -DCMAKE_BUILD_TYPE=Release
