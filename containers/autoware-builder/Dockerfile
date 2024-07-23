@@ -134,7 +134,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREF
         libnvonnxparsers-dev=8.* \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
-ENV PATH="/usr/local/cuda-12.4/bin:${PATH}"
+RUN update-alternatives --set cuda /usr/local/cuda-12.4
 
 FROM autoware-builder AS autoware-builder-with-cache
 
