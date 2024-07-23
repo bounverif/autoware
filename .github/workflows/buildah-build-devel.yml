@@ -1,0 +1,76 @@
+name: buildah-build-devel
+run-name: Autoware devel container build
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows: [buildah-build-builder]
+    types:
+      - completed
+  push:
+    paths:
+      - .github/workflows/buildah-build-devel.yml # Self-trigger 
+
+env:
+  REGISTRY: ghcr.io/bounverif
+  IMAGE_NAME: autoware
+  AUTOWARE_VERSION: latest
+  CONTAINERS_ROOT: /home/runner/.local/share/containers
+  TMPDIR: /home/runner/.local/share/containers/tmp
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  autoware-devel-build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@v10
+        with:
+          root-reserve-mb: 2048 # Reserve disk space for repository
+          remove-dotnet: 'true'
+          remove-android: 'true'
+          remove-haskell: 'true'
+          remove-codeql: 'true'
+          remove-docker-images: 'true'
+          build-mount-path: ${{ env.CONTAINERS_ROOT }} # The remaining space only for container build
+
+      - run: mkdir -p $TMPDIR
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to the GitHub Container registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build devel container image
+        id: build-devel
+        uses: redhat-actions/buildah-build@v2
+        with:
+          platforms: linux/amd64
+          image: ${{ env.IMAGE_NAME }}
+          tags: latest-devel
+          layers: true
+          oci: true
+          extra-args:
+            --target autoware-devel
+          containerfiles: |
+            containers/autoware-devel/Dockerfile
+
+      - name: Push to GitHub Container Repository
+        id: push-devel-ghcr
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          image: ${{ steps.build-devel.outputs.image }}
+          tags: ${{ steps.build-devel.outputs.tags }}

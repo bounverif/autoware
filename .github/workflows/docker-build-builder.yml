@@ -1,11 +1,9 @@
-name: Build Autoware builder container images (Docker)
+name: docker-build-builder
 on:
   workflow_dispatch:
   push:
     paths:
-      - Dockerfile
-      - autoware.repos.yml
-      - .github/workflows/builder-build.yml # Self-trigger 
+      - .github/workflows/docker-build-builder.yml # Self-trigger 
 
 env:
   REGISTRY: ghcr.io/bounverif
