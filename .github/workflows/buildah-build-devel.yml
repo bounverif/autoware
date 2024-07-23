@@ -1,11 +1,15 @@
-name: Build Autoware runtime container images using Buildah
+name: buildah-build-devel
+run-name: Autoware devel container build
+
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '30 16 * * 1-5' # 16:30 UTC every weekday
+  workflow_run:
+    workflows: [buildah-build-builder]
+    types:
+      - completed
   push:
     paths:
-      - .github/workflows/runtime-buildah-build.yml # Self-trigger 
+      - .github/workflows/buildah-build-devel.yml # Self-trigger 
 
 env:
   REGISTRY: ghcr.io/bounverif
@@ -23,7 +27,7 @@ permissions:
   packages: write
 
 jobs:
-  autoware-runtime-build:
+  autoware-devel-build:
     runs-on: ubuntu-24.04
     steps:
       - name: Maximize build space
@@ -42,9 +46,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set current date as the version
-        run: echo "AUTOWARE_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
-
       - name: Log in to the GitHub Container registry
         uses: redhat-actions/podman-login@v1
         with:
@@ -52,27 +53,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build runtime container image
-        id: build-runtime
+      - name: Build devel container image
+        id: build-devel
         uses: redhat-actions/buildah-build@v2
         with:
           platforms: linux/amd64
           image: ${{ env.IMAGE_NAME }}
-          tags: ${{ env.AUTOWARE_VERSION }}-runtime latest-runtime latest
+          tags: latest-devel
           layers: true
           oci: true
-          build-args: |
-            AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
           extra-args:
-            --target autoware-runtime
-            --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/cache
+            --target autoware-devel
           containerfiles: |
-            containers/autoware-runtime/Dockerfile
+            containers/autoware-devel/Dockerfile
 
       - name: Push to GitHub Container Repository
-        id: push-runtime-ghcr
+        id: push-devel-ghcr
         uses: redhat-actions/push-to-registry@v2
         with:
           registry: ${{ env.REGISTRY }}
-          image: ${{ steps.build-runtime.outputs.image }}
-          tags: ${{ steps.build-runtime.outputs.tags }}
+          image: ${{ steps.build-devel.outputs.image }}
+          tags: ${{ steps.build-devel.outputs.tags }}

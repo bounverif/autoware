@@ -1,15 +1,11 @@
-name: buildah-build-devel
-run-name: Autoware devel container build
-
+name: buildah-build-runtime
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: [Run Tests]
-    types:
-      - completed
+  schedule:
+    - cron: '30 16 * * 1-5' # 16:30 UTC every weekday
   push:
     paths:
-      - .github/workflows/devel-buildah-build.yml # Self-trigger 
+      - .github/workflows/buildah-build-runtime.yml # Self-trigger 
 
 env:
   REGISTRY: ghcr.io/bounverif
@@ -27,7 +23,7 @@ permissions:
   packages: write
 
 jobs:
-  autoware-devel-build:
+  autoware-runtime-build:
     runs-on: ubuntu-24.04
     steps:
       - name: Maximize build space
@@ -46,6 +42,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set current date as the version
+        run: echo "AUTOWARE_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
+
       - name: Log in to the GitHub Container registry
         uses: redhat-actions/podman-login@v1
         with:
@@ -53,24 +52,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build devel container image
-        id: build-devel
+      - name: Build runtime container image
+        id: build-runtime
         uses: redhat-actions/buildah-build@v2
         with:
           platforms: linux/amd64
           image: ${{ env.IMAGE_NAME }}
-          tags: latest-devel
+          tags: ${{ env.AUTOWARE_VERSION }}-runtime latest-runtime latest
           layers: true
           oci: true
+          build-args: |
+            AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
           extra-args:
-            --target autoware-devel
+            --target autoware-runtime
+            --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/cache
           containerfiles: |
-            containers/autoware-devel/Dockerfile
+            containers/autoware-runtime/Dockerfile
 
       - name: Push to GitHub Container Repository
-        id: push-devel-ghcr
+        id: push-runtime-ghcr
         uses: redhat-actions/push-to-registry@v2
         with:
           registry: ${{ env.REGISTRY }}
-          image: ${{ steps.build-devel.outputs.image }}
-          tags: ${{ steps.build-devel.outputs.tags }}
+          image: ${{ steps.build-runtime.outputs.image }}
+          tags: ${{ steps.build-runtime.outputs.tags }}
