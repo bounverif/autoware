@@ -67,7 +67,7 @@ jobs:
             --target autoware-runtime
             --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/cache
           containerfiles: |
-            ./Dockerfile
+            containers/autoware-runtime/Dockerfile
 
       - name: Push to GitHub Container Repository
         id: push-runtime-ghcr

@@ -61,7 +61,7 @@ jobs:
             --cache-to=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
             --cache-ttl=24h
           containerfiles: |
-            ./Dockerfile
+            containers/autoware-builder/Dockerfile
 
       - name: Build builder-with-cache container image
         id: build-builder-with-cache
@@ -78,7 +78,7 @@ jobs:
             --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
             --cache-to=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           containerfiles: |
-            ./Dockerfile
+            containers/autoware-builder/Dockerfile
 
       - name: Log in to the GitHub Container registry
         uses: redhat-actions/podman-login@v1
