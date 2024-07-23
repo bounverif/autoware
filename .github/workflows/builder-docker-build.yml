@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - .github/workflows/builder-build.yml # Self-trigger 
+      - .github/workflows/builder-docker-build.yml # Self-trigger 
 
 env:
   REGISTRY: ghcr.io/bounverif
