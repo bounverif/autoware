@@ -2,15 +2,6 @@
 
 This repository hosts a collection of experimental Autoware container images. These images are designed to provide a convenient and reproducible environment for developing and running Autoware, an open-source software stack for autonomous driving.
 
-### Runtime images
-
-The image `ghcr.io/bounverif/autoware:latest` provides a minimal runtime environment and binaries. 
-
-Thes images are deployment candidates, which will be tested systematically before any deployment. 
-
-> [!CAUTION]
-> This image is currently under development. Currently not ready for execution.
-
 ### Builder images
 
 The image `ghcr.io/bounverif/autoware:latest-builder` provides a build environment for Autoware where necessary build tools and dependencies are pre-installed. 
@@ -27,6 +18,15 @@ We suggest developers using the `distrobox` tool for the best developer experien
 
 > [!WARNING]
 > This image is currently under development. Provides minimal extra functionality over builder images.
+
+### Runtime images
+
+The image `ghcr.io/bounverif/autoware:latest` provides a minimal runtime environment and binaries. 
+
+Thes images are deployment candidates, which will be tested systematically before any deployment. 
+
+> [!CAUTION]
+> This image is currently under development. Currently not ready for execution.
 
 ## License
 
