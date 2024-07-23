@@ -102,11 +102,13 @@ ENV CMAKE_GENERATOR=Ninja
 
 ENV CMAKE_C_COMPILER_LAUNCHER=ccache
 ENV CMAKE_CXX_COMPILER_LAUNCHER=ccache
+ENV CMAKE_CUDA_COMPILER_LAUNCHER=ccache
 ENV CCACHE_DIR=/var/cache/ccache
 
 # Set environment variables for all users 
 RUN printf "CMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}\\n" >> /etc/environment && \
     printf "CMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}\\n" >> /etc/environment && \
+    printf "CMAKE_CUDA_COMPILER_LAUNCHER=${CMAKE_CUDA_COMPILER_LAUNCHER}\\n" >> /etc/environment && \
     printf "CCACHE_DIR=${CCACHE_DIR}\\n" >> /etc/environment
 
 RUN mkdir -p ${CCACHE_DIR} && chmod 777 ${CCACHE_DIR}
