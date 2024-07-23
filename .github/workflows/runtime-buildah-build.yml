@@ -1,0 +1,78 @@
+name: Build Autoware runtime container images using Buildah
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '34 15 * * 0' # 15:34 UTC every Sunday
+  push:
+    paths:
+      - .github/workflows/runtime-buildah-build.yml # Self-trigger 
+
+env:
+  REGISTRY: ghcr.io/bounverif
+  IMAGE_NAME: autoware
+  AUTOWARE_VERSION: latest
+  CONTAINERS_ROOT: /home/runner/.local/share/containers
+  TMPDIR: /home/runner/.local/share/containers/tmp
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  autoware-builder-build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Maximize build space
+        uses: easimon/maximize-build-space@v10
+        with:
+          root-reserve-mb: 2048 # Reserve disk space for repository
+          remove-dotnet: 'true'
+          remove-android: 'true'
+          remove-haskell: 'true'
+          remove-codeql: 'true'
+          remove-docker-images: 'true'
+          build-mount-path: ${{ env.CONTAINERS_ROOT }} # The remaining space only for container build
+
+      - run: mkdir -p $TMPDIR
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set current date as the version
+        run: echo "AUTOWARE_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
+
+      - name: Log in to the GitHub Container registry
+        uses: redhat-actions/podman-login@v1
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build runtime container image
+        id: build-runtime
+        uses: redhat-actions/buildah-build@v2
+        with:
+          platforms: linux/amd64
+          image: ${{ env.IMAGE_NAME }}
+          tags: ${{ env.AUTOWARE_VERSION }}-builder latest-builder
+          layers: true
+          oci: true
+          build-args: |
+            AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
+          extra-args:
+            --target autoware-runtime
+            --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/cache
+          containerfiles: |
+            ./Dockerfile
+
+      # - name: Push to GitHub Container Repository
+      #   id: push-runtime-ghcr
+      #   uses: redhat-actions/push-to-registry@v2
+      #   with:
+      #     registry: ${{ env.REGISTRY }}
+      #     image: ${{ steps.build-runtime.outputs.image }}
+      #     tags: ${{ steps.build-runtime.outputs.tags }}

@@ -166,11 +166,12 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
     && rm -rf ${AUTOWARE_INSTALL_DIR} \
     && du -h --max-depth=0 ${CCACHE_DIR}
 
-FROM autoware-builder-with-cache AS autoware-prebuilt
+FROM ghcr.io/bounverif/autoware:latest-builder-with-cache AS autoware-prebuilt
 
-COPY autoware.repos.yml /var/lib/autoware/autoware.repos.${AUTOWARE_VERSION}.yml
+COPY autoware.repos.yml /var/lib/autoware/autoware.repos.yml
 
-RUN mkdir -p ${AUTOWARE_SOURCE_DIR} && vcs import --shallow ${AUTOWARE_SOURCE_DIR} < /var/lib/autoware/autoware.repos.${AUTOWARE_VERSION}.yml \
+RUN mkdir -p ${AUTOWARE_SOURCE_DIR} \
+    && vcs import --shallow ${AUTOWARE_SOURCE_DIR} < /var/lib/autoware/autoware.repos.yml && \
     ccache --zero-stats && \
     . /opt/ros/humble/setup.sh && \
     colcon --log-base /dev/null build \
