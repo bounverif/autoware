@@ -23,7 +23,7 @@ permissions:
   packages: write
 
 jobs:
-  autoware-builder-build:
+  autoware-runtime-build:
     runs-on: ubuntu-24.04
     steps:
       - name: Maximize build space
@@ -58,7 +58,7 @@ jobs:
         with:
           platforms: linux/amd64
           image: ${{ env.IMAGE_NAME }}
-          tags: ${{ env.AUTOWARE_VERSION }}-builder latest-builder
+          tags: ${{ env.AUTOWARE_VERSION }}-runtime latest-runtime latest
           layers: true
           oci: true
           build-args: |
