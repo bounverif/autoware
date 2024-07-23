@@ -22,12 +22,6 @@ ENV AUTOWARE_SOURCE_DIR=/usr/local/src/autoware
 ENV AUTOWARE_BUILD_DIR=/tmp/build/autoware
 ENV AUTOWARE_INSTALL_DIR=/opt/autoware/humble
 
-# CUDA variables
-ARG CUDA_ARCH=x86_64
-ARG CUDA_DISTRO=ubuntu2204
-ARG CUDA_KEYRING_PACKAGE=cuda-keyring_1.1-1_all.deb
-ARG CUDA_KEYRING_FILEPATH=https://developer.download.nvidia.com/compute/cuda/repos/${CUDA_DISTRO}/${CUDA_ARCH}/${CUDA_KEYRING_PACKAGE}
-
 # Debian containers save no deb archives by default. 
 # The following command disables clean-up actions to enable
 #   --mount=type=cache,target=/var/cache/apt 
@@ -57,8 +51,7 @@ RUN groupadd ${USERGROUP} -g ${GID} && \
 
 # Repository management
 RUN wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" | gpg --dearmour -o /usr/share/keyrings/ros-archive-keyring.gpg && \
-    echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu jammy main" > /etc/apt/sources.list.d/ros2.list && \
-    wget -q ${CUDA_KEYRING_FILEPATH} && dpkg -i ${CUDA_KEYRING_PACKAGE} && rm ${CUDA_KEYRING_PACKAGE}
+    echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu jammy main" > /etc/apt/sources.list.d/ros2.list
 
 FROM autoware-base AS autoware-source
 
@@ -120,6 +113,13 @@ RUN mkdir -p ${CCACHE_DIR} && chmod 777 ${CCACHE_DIR}
 
 FROM autoware-builder-nocuda AS autoware-builder
 
+ARG CUDA_ARCH=x86_64
+ARG CUDA_DISTRO=ubuntu2204
+ARG CUDA_KEYRING_PACKAGE=cuda-keyring_1.1-1_all.deb
+ARG CUDA_KEYRING_FILEPATH=https://developer.download.nvidia.com/compute/cuda/repos/${CUDA_DISTRO}/${CUDA_ARCH}/${CUDA_KEYRING_PACKAGE}
+
+RUN wget -q ${CUDA_KEYRING_FILEPATH} && dpkg -i ${CUDA_KEYRING_PACKAGE} && rm ${CUDA_KEYRING_PACKAGE}
+
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREFIX}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update -qq && \
@@ -139,7 +139,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREF
 RUN update-alternatives --set cuda /usr/local/cuda-12.4
 
 FROM autoware-builder AS autoware-builder-with-cache
-
 #
 # This build is only for producing a build cache to be saved in the image.
 # Hence, we do not want build artifacts and logs.
@@ -148,8 +147,8 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
     . /opt/ros/humble/setup.sh && \
     colcon --log-base /dev/null build \
         --base-paths ${AUTOWARE_SOURCE_DIR} \
-        --build-base ${AUTOWARE_BUILD_DIR} \
-        --install-base ${AUTOWARE_INSTALL_DIR} \
+        --build-base /tmp/build \
+        --install-base /tmp/install \
         --packages-up-to autoware_launch \
         --event-handlers \
             console_direct- \
@@ -164,6 +163,6 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
             -DCMAKE_BUILD_TYPE=Release \
             " -Wno-dev" \
             " --no-warn-unused-cli" \
-    && rm -rf ${AUTOWARE_BUILD_DIR} \
-    && rm -rf ${AUTOWARE_INSTALL_DIR} \
+    && rm -rf /tmp/build \
+    && rm -rf /tmp/install \
     && du -h --max-depth=0 ${CCACHE_DIR}
