@@ -6,6 +6,10 @@ on:
     paths:
       - .github/workflows/test-builder.yml # Self-trigger
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test-builder-build:
     runs-on: ubuntu-latest
