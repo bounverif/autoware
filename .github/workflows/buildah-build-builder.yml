@@ -86,6 +86,7 @@ jobs:
             containers/autoware-builder/Dockerfile
 
       - name: Push to GitHub Container Repository
+        if: github.ref == 'refs/heads/main'
         id: push-builder-ghcr
         uses: redhat-actions/push-to-registry@v2
         with:
@@ -94,6 +95,7 @@ jobs:
           tags: ${{ steps.build-builder.outputs.tags }}
 
       - name: Push to GitHub Container Repository
+        if: github.ref == 'refs/heads/main'
         id: push-builder-with-cache-ghcr
         uses: redhat-actions/push-to-registry@v2
         with:
