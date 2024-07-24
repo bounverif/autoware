@@ -18,8 +18,9 @@ LABEL org.opencontainers.image.title="Autoware"
 # Autoware variables
 ARG AUTOWARE_VERSION=latest
 ENV AUTOWARE_VERSION=${AUTOWARE_VERSION}
-ENV AUTOWARE_SOURCE_DIR=/usr/local/src/autoware
-ENV AUTOWARE_BUILD_DIR=/tmp/build/autoware
+ENV AUTOWARE_ROOT=/root/autoware
+ENV AUTOWARE_SOURCE_DIR=${AUTOWARE_ROOT}/src
+ENV AUTOWARE_BUILD_DIR=${AUTOWARE_ROOT}/build
 ENV AUTOWARE_INSTALL_DIR=/opt/autoware/humble
 
 # Debian containers save no deb archives by default. 
@@ -103,7 +104,7 @@ ENV CMAKE_GENERATOR=Ninja
 ENV CMAKE_C_COMPILER_LAUNCHER=ccache
 ENV CMAKE_CXX_COMPILER_LAUNCHER=ccache
 ENV CMAKE_CUDA_COMPILER_LAUNCHER=ccache
-ENV CCACHE_BASEDIR=${AUTOWARE_SOURCE_DIR}
+ENV CCACHE_BASEDIR=${AUTOWARE_ROOT}
 ENV CCACHE_DIR=/var/cache/ccache
 
 # Set environment variables for all users 
@@ -150,7 +151,7 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
     . /opt/ros/humble/setup.sh && \
     colcon --log-base /dev/null build \
         --base-paths ${AUTOWARE_SOURCE_DIR} \
-        --build-base /tmp/build \
+        --build-base ${AUTOWARE_BUILD_DIR} \
         --install-base /tmp/install \
         --packages-up-to autoware_launch \
         --event-handlers \
@@ -166,6 +167,8 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
             -DCMAKE_BUILD_TYPE=Release \
             " -Wno-dev" \
             " --no-warn-unused-cli" \
-    && rm -rf /tmp/build \
+    && rm -rf ${AUTOWARE_SOURCE_DIR} \
+    && rm -rf ${AUTOWARE_BUILD_DIR} \
+    && rm -rf ${AUTOWARE_ROOT} \
     && rm -rf /tmp/install \
     && du -h --max-depth=0 ${CCACHE_DIR}
