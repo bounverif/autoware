@@ -2,10 +2,11 @@ name: buildah-build-builder
 on:
   workflow_dispatch:
   schedule:
-    - cron: '30 12 * * 0' # 12:30 UTC every Sunday
+    - cron: "30 12 * * 0" # 12:30 UTC every Sunday
   push:
     paths:
-      - .github/workflows/buildah-build-builder.yml # Self-trigger 
+      - containers/autoware-builder/**
+      - .github/workflows/buildah-build-builder.yml # Self-trigger
 
 env:
   REGISTRY: ghcr.io/bounverif
@@ -30,11 +31,11 @@ jobs:
         uses: easimon/maximize-build-space@v10
         with:
           root-reserve-mb: 2048 # Reserve disk space for repository
-          remove-dotnet: 'true'
-          remove-android: 'true'
-          remove-haskell: 'true'
-          remove-codeql: 'true'
-          remove-docker-images: 'true'
+          remove-dotnet: "true"
+          remove-android: "true"
+          remove-haskell: "true"
+          remove-codeql: "true"
+          remove-docker-images: "true"
           build-mount-path: ${{ env.CONTAINERS_ROOT }} # The remaining space only for container build
 
       - run: mkdir -p $TMPDIR
@@ -63,8 +64,7 @@ jobs:
           oci: true
           build-args: |
             AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
-          extra-args:
-            --target autoware-builder
+          extra-args: --target autoware-builder
             --cache-to=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/cache
           containerfiles: |
             containers/autoware-builder/Dockerfile
@@ -80,13 +80,13 @@ jobs:
           oci: true
           build-args: |
             AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
-          extra-args:
-            --target autoware-builder-with-cache
+          extra-args: --target autoware-builder-with-cache
             --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/cache
           containerfiles: |
             containers/autoware-builder/Dockerfile
 
       - name: Push to GitHub Container Repository
+        if: github.ref == 'refs/heads/main'
         id: push-builder-ghcr
         uses: redhat-actions/push-to-registry@v2
         with:
@@ -95,6 +95,7 @@ jobs:
           tags: ${{ steps.build-builder.outputs.tags }}
 
       - name: Push to GitHub Container Repository
+        if: github.ref == 'refs/heads/main'
         id: push-builder-with-cache-ghcr
         uses: redhat-actions/push-to-registry@v2
         with:
