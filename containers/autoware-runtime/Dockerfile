@@ -1,4 +1,6 @@
-FROM ghcr.io/bounverif/autoware:latest-builder-with-cache AS autoware-prebuilt
+ARG BASE_IMAGE=ghcr.io/bounverif/autoware
+ARG BASE_IMAGE_VERSION=latest
+FROM ${BASE_IMAGE}:${BASE_IMAGE_VERSION}-builder-with-cache AS autoware-prebuilt
 
 COPY autoware.repos.yml /var/lib/autoware/autoware.repos.yml
 
@@ -34,6 +36,9 @@ ARG TARGETARCH
 ARG TARGETOS
 ARG TARGETPLATFORM
 ARG TARGETVARIANT
+
+ARG ROS_DISTRO=humble   
+ENV ROS_DISTRO=${ROS_DISTRO}
 
 # Metadata
 LABEL org.opencontainers.image.vendor="tr.edu.bogazici.cmpe.bounverif"
@@ -81,9 +86,6 @@ ARG TARGETARCH
 ARG TARGETOS
 ARG TARGETPLATFORM
 ARG TARGETVARIANT
-
-ARG ROS_DISTRO=humble   
-ENV ROS_DISTRO=${ROS_DISTRO}
 
 COPY --from=autoware-prebuilt ${AUTOWARE_INSTALL_DIR} ${AUTOWARE_INSTALL_DIR}
 

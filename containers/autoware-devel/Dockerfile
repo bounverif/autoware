@@ -1,4 +1,6 @@
-FROM ghcr.io/bounverif/autoware:latest-builder-with-cache AS autoware-devel
+ARG BASE_IMAGE=ghcr.io/bounverif/autoware
+ARG BASE_IMAGE_VERSION=latest
+FROM ${BASE_IMAGE}:${BASE_IMAGE_VERSION}-builder-with-cache AS autoware-devel
 
 ARG TARGETARCH
 ARG TARGETOS
