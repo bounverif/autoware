@@ -29,7 +29,9 @@ permissions:
 jobs:
   autoware-devel-build:
     runs-on: ubuntu-24.04
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: >- 
+      github.event_name == 'workflow_dispatch' || 
+      github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Maximize build space
         uses: easimon/maximize-build-space@v10
