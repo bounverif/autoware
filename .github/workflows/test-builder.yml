@@ -27,6 +27,7 @@ jobs:
       - name: Build up to autoware_launch
         run: |
           mkdir -p src
+          export CCACHE_BASEDIR=${{ github.workspace }}
           vcs import src --shallow --input autoware.repos
           . /opt/ros/humble/setup.sh
           ccache --zero-stats
