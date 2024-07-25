@@ -8,11 +8,14 @@ on:
     paths:
       - .github/workflows/test-registry-package.yml # Self-trigger
 
+permissions:
+  packages: read
+
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - run: echo ${{ toJson(github.event.registry_package) }}
+      - run: echo ${{ toJson(github.event) }}
 
   test2:
     runs-on: ubuntu-latest
