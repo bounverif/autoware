@@ -15,10 +15,9 @@ LABEL org.opencontainers.image.title="Autoware"
 # Autoware variables
 ARG AUTOWARE_VERSION=latest
 ENV AUTOWARE_VERSION=${AUTOWARE_VERSION}
-ENV AUTOWARE_ROOT=/root/autoware
-ENV AUTOWARE_SOURCE_DIR=${AUTOWARE_ROOT}/src
-ENV AUTOWARE_BUILD_DIR=${AUTOWARE_ROOT}/build
-ENV AUTOWARE_INSTALL_DIR=/opt/autoware/humble
+ENV AUTOWARE_SOURCE_DIR=/tmp/src
+ENV AUTOWARE_BUILD_DIR=/tmp/build
+ENV AUTOWARE_INSTALL_DIR=/opt/autoware
 
 # Debian containers save no deb archives by default. 
 # The following command disables clean-up actions to enable
@@ -53,6 +52,11 @@ RUN wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" |
 
 FROM autoware-base AS autoware-source
 
+ARG TARGETARCH
+ARG TARGETOS
+ARG TARGETPLATFORM
+ARG TARGETVARIANT
+
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update -qq && \
@@ -66,7 +70,12 @@ COPY autoware.repos.yml /var/lib/autoware/autoware.repos.${AUTOWARE_VERSION}.yml
 
 RUN mkdir -p ${AUTOWARE_SOURCE_DIR} && vcs import --shallow ${AUTOWARE_SOURCE_DIR} < /var/lib/autoware/autoware.repos.${AUTOWARE_VERSION}.yml
 
-FROM autoware-base AS autoware-builder-nocuda
+FROM autoware-base AS autoware-builder
+
+ARG TARGETARCH
+ARG TARGETOS
+ARG TARGETPLATFORM
+ARG TARGETVARIANT
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
@@ -110,12 +119,16 @@ RUN printf "CMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}\\n" >> /etc/e
 
 RUN mkdir -p ${CCACHE_DIR} && chmod 777 ${CCACHE_DIR}
 
-FROM autoware-builder-nocuda AS autoware-builder
-
+# CUDA Toolkit Installation
 ARG CUDA_ARCH=x86_64
 ARG CUDA_DISTRO=ubuntu2204
 ARG CUDA_KEYRING_PACKAGE=cuda-keyring_1.1-1_all.deb
 ARG CUDA_KEYRING_FILEPATH=https://developer.download.nvidia.com/compute/cuda/repos/${CUDA_DISTRO}/${CUDA_ARCH}/${CUDA_KEYRING_PACKAGE}
+
+ARG CUDA_TOOLKIT_VERSION_MAJOR=12
+ARG CUDA_TOOLKIT_VERSION_MINOR=4
+ENV CUDA_TOOLKIT_VERSION_DASHED=${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR}
+ENV CUDA_TOOLKIT_VERSION=${CUDA_TOOLKIT_VERSION_MAJOR}.${CUDA_TOOLKIT_VERSION_MINOR}
 
 RUN wget -q ${CUDA_KEYRING_FILEPATH} && dpkg -i ${CUDA_KEYRING_PACKAGE} && rm ${CUDA_KEYRING_PACKAGE}
 
@@ -123,10 +136,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update -qq && \
     apt-get install -qy --no-install-recommends \
-        cuda-minimal-build-12-4 \
-        libcublas-dev-12-4 \
-        libcurand-dev-12-4 \
-        libcusolver-dev-12-4 \
+        cuda-minimal-build-${CUDA_TOOLKIT_VERSION_DASHED} \
+        libcublas-dev-${CUDA_TOOLKIT_VERSION_DASHED} \
+        libcurand-dev-${CUDA_TOOLKIT_VERSION_DASHED} \
+        libcusolver-dev-${CUDA_TOOLKIT_VERSION_DASHED} \
         libnvinfer-dev=8.* \
         libnvinfer-headers-dev=8.* \
         libnvinfer-plugin-dev=8.* \
@@ -135,7 +148,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
         libnvonnxparsers-dev=8.* \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
-RUN update-alternatives --set cuda /usr/local/cuda-12.4
+RUN update-alternatives --set cuda /usr/local/cuda-${CUDA_TOOLKIT_VERSION}
 
 FROM autoware-builder AS autoware-builder-with-cache
 #
