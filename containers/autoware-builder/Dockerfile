@@ -1,12 +1,9 @@
 FROM docker.io/library/ubuntu:22.04 AS autoware-base
 
-ARG TARGETARCH=amd64
-ARG TARGETOS=linux
-ARG TARGETPLATFORM=linux/amd64
-
-ENV ID=ubuntu
-ENV VERSION_ID=22.04
-ENV CACHEMOUNT_PREFIX=/${TARGETARCH}/${ID}${VERSION_ID}
+ARG TARGETARCH
+ARG TARGETOS
+ARG TARGETPLATFORM
+ARG TARGETVARIANT
 
 # Metadata
 LABEL org.opencontainers.image.vendor="tr.edu.bogazici.cmpe.bounverif"
@@ -29,7 +26,7 @@ ENV AUTOWARE_INSTALL_DIR=/opt/autoware/humble
 # optimizations. Otherwise, apt caching does not work.
 RUN rm -f /etc/apt/apt.conf.d/docker-clean
 
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREFIX}/var/cache/apt \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update -qq && \
     apt-get install -qy --no-install-recommends \
@@ -56,7 +53,7 @@ RUN wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" |
 
 FROM autoware-base AS autoware-source
 
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREFIX}/var/cache/apt \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update -qq && \
     apt-get install -y --no-install-recommends \
@@ -71,7 +68,7 @@ RUN mkdir -p ${AUTOWARE_SOURCE_DIR} && vcs import --shallow ${AUTOWARE_SOURCE_DI
 
 FROM autoware-base AS autoware-builder-nocuda
 
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREFIX}/var/cache/apt \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update -qq && \
     apt-get install -y --no-install-recommends \
@@ -88,7 +85,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREF
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=${AUTOWARE_SOURCE_DIR} \
-    --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREFIX}/var/cache/apt \
+    --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
     apt update && \
     rosdep init && \
@@ -100,11 +97,9 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* 
 
 ENV CMAKE_GENERATOR=Ninja
-
 ENV CMAKE_C_COMPILER_LAUNCHER=ccache
 ENV CMAKE_CXX_COMPILER_LAUNCHER=ccache
 ENV CMAKE_CUDA_COMPILER_LAUNCHER=ccache
-ENV CCACHE_BASEDIR=${AUTOWARE_ROOT}
 ENV CCACHE_DIR=/var/cache/ccache
 
 # Set environment variables for all users 
@@ -124,7 +119,7 @@ ARG CUDA_KEYRING_FILEPATH=https://developer.download.nvidia.com/compute/cuda/rep
 
 RUN wget -q ${CUDA_KEYRING_FILEPATH} && dpkg -i ${CUDA_KEYRING_PACKAGE} && rm ${CUDA_KEYRING_PACKAGE}
 
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREFIX}/var/cache/apt \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update -qq && \
     apt-get install -qy --no-install-recommends \
@@ -147,11 +142,12 @@ FROM autoware-builder AS autoware-builder-with-cache
 # This build is only for producing a build cache to be saved in the image.
 # Hence, we do not want build artifacts and logs.
 #
-RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=${AUTOWARE_SOURCE_DIR} \
+RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=/tmp/src \
+    export CCACHE_BASEDIR=/tmp && \
     . /opt/ros/humble/setup.sh && \
     colcon --log-base /dev/null build \
-        --base-paths ${AUTOWARE_SOURCE_DIR} \
-        --build-base ${AUTOWARE_BUILD_DIR} \
+        --base-paths /tmp/src \
+        --build-base /tmp/build \
         --install-base /tmp/install \
         --packages-up-to autoware_launch \
         --event-handlers \
@@ -167,8 +163,6 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
             -DCMAKE_BUILD_TYPE=Release \
             " -Wno-dev" \
             " --no-warn-unused-cli" \
-    && rm -rf ${AUTOWARE_SOURCE_DIR} \
-    && rm -rf ${AUTOWARE_BUILD_DIR} \
-    && rm -rf ${AUTOWARE_ROOT} \
+    && rm -rf /tmp/build \
     && rm -rf /tmp/install \
     && du -h --max-depth=0 ${CCACHE_DIR}

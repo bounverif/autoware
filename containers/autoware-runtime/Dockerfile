@@ -30,6 +30,11 @@ RUN mkdir -p ${AUTOWARE_SOURCE_DIR} \
 
 FROM docker.io/library/ubuntu:22.04 AS autoware-runtime-base
 
+ARG TARGETARCH
+ARG TARGETOS
+ARG TARGETPLATFORM
+ARG TARGETVARIANT
+
 # Metadata
 LABEL org.opencontainers.image.vendor="tr.edu.bogazici.cmpe.bounverif"
 LABEL org.opencontainers.image.version="0.1.0"
@@ -74,7 +79,7 @@ FROM autoware-runtime-base AS autoware-runtime
 
 COPY --from=autoware-prebuilt ${AUTOWARE_INSTALL_DIR} ${AUTOWARE_INSTALL_DIR}
 
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${CACHEMOUNT_PREFIX}/var/cache/apt \
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && apt-get install -y --no-install-recommends \
         libcublas-12-4 \
