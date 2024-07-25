@@ -1,4 +1,4 @@
-name: test-build-tensorrt-yolox
+name: test-build-autoware-launch
 
 on:
   workflow_dispatch:
