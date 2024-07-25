@@ -1,4 +1,4 @@
-name: test-build-packages
+name: test-builder-with-cache
 
 on:
   workflow_dispatch:
@@ -6,7 +6,7 @@ on:
     types: [published, updated]
   push:
     paths:
-      - .github/workflows/test-build-packages.yml # Self-trigger
+      - .github/workflows/test-builder-with-cache.yml # Self-trigger
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
