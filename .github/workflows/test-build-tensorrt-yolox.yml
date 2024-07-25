@@ -22,8 +22,6 @@ jobs:
         with:
           repository: 'autowarefoundation/autoware'
 
-      - run: env && echo $CCACHE_DIR && ls -la $CCACHE_DIR && du -h --max-depth=0 ${CCACHE_DIR}
-
       - name: Build up to autoware_tensorrt_yolox
         run: |
           mkdir -p src
