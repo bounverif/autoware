@@ -5,7 +5,7 @@ COPY autoware.repos.yml /var/lib/autoware/autoware.repos.yml
 RUN mkdir -p ${AUTOWARE_SOURCE_DIR} \
     && vcs import --shallow ${AUTOWARE_SOURCE_DIR} < /var/lib/autoware/autoware.repos.yml && \
     ccache --zero-stats && \
-    . /opt/ros/humble/setup.sh && \
+    . /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon --log-base /dev/null build \
         --base-paths ${AUTOWARE_SOURCE_DIR} \
         --build-base ${AUTOWARE_BUILD_DIR} \
@@ -76,6 +76,14 @@ RUN wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" |
 FROM autoware-runtime-base AS autoware-runtime
 
 # This is not complete. It is just a placeholder for the final image.
+
+ARG TARGETARCH
+ARG TARGETOS
+ARG TARGETPLATFORM
+ARG TARGETVARIANT
+
+ARG ROS_DISTRO=humble   
+ENV ROS_DISTRO=${ROS_DISTRO}
 
 COPY --from=autoware-prebuilt ${AUTOWARE_INSTALL_DIR} ${AUTOWARE_INSTALL_DIR}
 

@@ -46,7 +46,9 @@ RUN groupadd ${USERGROUP} -g ${GID} && \
     useradd -ms /bin/bash ${USER} -g ${USERGROUP} -u ${UID} && \
     printf "${USER} ALL= NOPASSWD: ALL\\n" >> /etc/sudoers
 
-# Repository management
+# ROS repository management
+ARG ROS_DISTRO=humble   
+ENV ROS_DISTRO=${ROS_DISTRO}
 RUN wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" | gpg --dearmour -o /usr/share/keyrings/ros-archive-keyring.gpg && \
     echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu jammy main" > /etc/apt/sources.list.d/ros2.list
 
@@ -102,7 +104,7 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
     rosdep install -qy \
         --from-paths ${AUTOWARE_SOURCE_DIR} \
         --ignore-src \
-        --rosdistro humble \
+        --rosdistro ${ROS_DISTRO} \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* 
 
 ENV CMAKE_GENERATOR=Ninja
@@ -157,7 +159,7 @@ FROM autoware-builder AS autoware-builder-with-cache
 #
 RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=/tmp/src \
     export CCACHE_BASEDIR=/tmp && \
-    . /opt/ros/humble/setup.sh && \
+    . /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon --log-base /dev/null build \
         --base-paths /tmp/src \
         --build-base /tmp/build \
