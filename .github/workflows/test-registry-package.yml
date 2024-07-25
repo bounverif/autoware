@@ -3,19 +3,15 @@ name: test-registry-package
 on:
   workflow_dispatch:
   registry_package:
-    types: [published, updated]
-  push:
-    paths:
-      - .github/workflows/test-registry-package.yml # Self-trigger
 
 permissions:
-  packages: read
+  packages: write
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - run: echo ${{ toJson(github.event) }}
+      - run: echo "${{ toJson(github.event) }}"
 
   test2:
     runs-on: ubuntu-latest
