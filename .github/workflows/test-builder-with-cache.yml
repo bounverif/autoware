@@ -1,0 +1,45 @@
+name: test-build-packages
+
+on:
+  workflow_dispatch:
+  registry_package:
+    types: [published, updated]
+  push:
+    paths:
+      - .github/workflows/test-build-packages.yml # Self-trigger
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-package-with-cache:
+    # if: ${{ github.event.registry_package.package_version.container_metadata.tag.name == 'latest-builder-with-cache' }}
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/bounverif/autoware:latest-builder-with-cache
+
+    strategy:
+      matrix:
+        package:
+          - autoware_tensorrt_yolox
+          - autoware_launch
+
+    steps:
+      - name: Checkout Autoware repository
+        uses: actions/checkout@v4
+        with:
+          repository: 'autowarefoundation/autoware'
+
+      - run: echo ${{ toJson(github.event.registry_package) }}
+
+      - name: Build up to ${{ matrix.package }}
+        run: |
+          mkdir -p src
+          export CCACHE_BASEDIR=${PWD}
+          vcs import src --shallow --input autoware.repos
+          . /opt/ros/humble/setup.sh
+          echo "CCACHE_BASEDIR=${CCACHE_BASEDIR}"
+          ccache --zero-stats
+          colcon build --packages-up-to ${{ matrix.package }} --cmake-args -DCMAKE_BUILD_TYPE=Release
+          ccache -v --show-stats
