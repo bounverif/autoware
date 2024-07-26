@@ -1,9 +1,5 @@
 FROM docker.io/library/ubuntu:22.04 AS autoware-base
-
-ARG TARGETARCH
-ARG TARGETOS
-ARG TARGETPLATFORM
-ARG TARGETVARIANT
+ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 # Metadata
 LABEL org.opencontainers.image.vendor="tr.edu.bogazici.cmpe.bounverif"
@@ -53,11 +49,7 @@ RUN wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" |
     echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu jammy main" > /etc/apt/sources.list.d/ros2.list
 
 FROM autoware-base AS autoware-source
-
-ARG TARGETARCH
-ARG TARGETOS
-ARG TARGETPLATFORM
-ARG TARGETVARIANT
+ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
@@ -73,11 +65,7 @@ COPY autoware.repos.yml /var/lib/autoware/autoware.repos.${AUTOWARE_VERSION}.yml
 RUN mkdir -p ${AUTOWARE_SOURCE_DIR} && vcs import --shallow ${AUTOWARE_SOURCE_DIR} < /var/lib/autoware/autoware.repos.${AUTOWARE_VERSION}.yml
 
 FROM autoware-base AS autoware-builder
-
-ARG TARGETARCH
-ARG TARGETOS
-ARG TARGETPLATFORM
-ARG TARGETVARIANT
+ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
@@ -156,6 +144,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
 RUN update-alternatives --set cuda /usr/local/cuda-${CUDA_TOOLKIT_VERSION}
 
 FROM autoware-builder AS autoware-builder-with-cache
+ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 #
 # This build is only for producing a build cache to be saved in the image.
 # Hence, we do not want build artifacts and logs.
