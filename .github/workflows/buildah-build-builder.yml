@@ -26,6 +26,9 @@ permissions:
 jobs:
   buildah-build-builder:
     runs-on: ubuntu-24.04
+    concurrency:
+      group: buildah-build-devel-core-${{ github.ref }}
+      cancel-in-progress: true 
     steps:
       - name: Maximize build space
         uses: easimon/maximize-build-space@v10
