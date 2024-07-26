@@ -3,10 +3,7 @@ run-name: Autoware devel container build
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: [buildah-build-builder]
-    types:
-      - completed
+  workflow_call:
   push:
     paths:
       - .github/workflows/buildah-build-devel.yml # Self-trigger

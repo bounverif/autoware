@@ -103,6 +103,10 @@ jobs:
           image: ${{ steps.build-builder-with-cache.outputs.image }}
           tags: ${{ steps.build-builder-with-cache.outputs.tags }}
 
+  build-devel:
+    needs: build-builder
+    uses: ./.github/workflows/buildah-build-devel.yml
+
   test-builder-with-cache:
     needs: build-builder
     uses: ./.github/workflows/test-builder-with-cache.yml
