@@ -24,7 +24,7 @@ permissions:
   packages: write
 
 jobs:
-  autoware-builder-build:
+  build-builder:
     runs-on: ubuntu-24.04
     steps:
       - name: Maximize build space
@@ -102,3 +102,7 @@ jobs:
           registry: ${{ env.REGISTRY }}
           image: ${{ steps.build-builder-with-cache.outputs.image }}
           tags: ${{ steps.build-builder-with-cache.outputs.tags }}
+
+  test-builder-with-cache:
+    needs: build-builder
+    uses: ./.github/workflows/test-builder-with-cache.yml
