@@ -111,18 +111,15 @@ ENV CMAKE_GENERATOR=Ninja
 ENV CMAKE_C_COMPILER_LAUNCHER=ccache
 ENV CMAKE_CXX_COMPILER_LAUNCHER=ccache
 ENV CMAKE_CUDA_COMPILER_LAUNCHER=ccache
+ENV CCACHE_DIR=/var/cache/ccache
 
 # Set environment variables for all users 
-RUN printf "CMAKE_GENERATOR=${CMAKE_GENERATOR}\\n" >> /etc/environment && \
-    printf "CMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}\\n" >> /etc/environment && \
+RUN printf "CMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}\\n" >> /etc/environment && \
     printf "CMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}\\n" >> /etc/environment && \
-    printf "CMAKE_CUDA_COMPILER_LAUNCHER=${CMAKE_CUDA_COMPILER_LAUNCHER}\\n" >> /etc/environment
+    printf "CMAKE_CUDA_COMPILER_LAUNCHER=${CMAKE_CUDA_COMPILER_LAUNCHER}\\n" >> /etc/environment && \
+    printf "CCACHE_DIR=${CCACHE_DIR}\\n" >> /etc/environment
 
-# Ccache configuration
-COPY etc/ccache.conf /etc/ccache.conf
-RUN export CCACHE_DIR=$(ccache --get-config cache_dir) && \ 
-    mkdir -p ${CCACHE_DIR} && \
-    chmod 777 ${CCACHE_DIR}
+RUN mkdir -p ${CCACHE_DIR} && chmod 777 ${CCACHE_DIR}
 
 # CUDA Toolkit Installation
 ARG CUDA_ARCH=x86_64
@@ -161,6 +158,7 @@ FROM autoware-builder AS autoware-builder-with-cache
 # Hence, we do not want build artifacts and logs.
 #
 RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=/tmp/src \
+    export CCACHE_BASEDIR=/tmp && \
     . /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon --log-base /dev/null build \
         --base-paths /tmp/src \
@@ -181,4 +179,5 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
             " -Wno-dev" \
             " --no-warn-unused-cli" \
     && rm -rf /tmp/build \
-    && rm -rf /tmp/install
+    && rm -rf /tmp/install \
+    && du -h --max-depth=0 ${CCACHE_DIR}
