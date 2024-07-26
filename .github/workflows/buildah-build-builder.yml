@@ -24,7 +24,7 @@ permissions:
   packages: write
 
 jobs:
-  build-builder:
+  buildah-build-builder:
     runs-on: ubuntu-24.04
     steps:
       - name: Maximize build space
@@ -103,10 +103,16 @@ jobs:
           image: ${{ steps.build-builder-with-cache.outputs.image }}
           tags: ${{ steps.build-builder-with-cache.outputs.tags }}
 
-  build-devel:
+  buildah-build-devel:
     needs: build-builder
     uses: ./.github/workflows/buildah-build-devel.yml
+    concurrency:
+      group: buildah-build-devel-${{ github.ref }}
+      cancel-in-progress: true 
 
   test-builder-with-cache:
     needs: build-builder
     uses: ./.github/workflows/test-builder-with-cache.yml
+    concurrency:
+      group: test-builder-with-cache-${{ github.ref }}
+      cancel-in-progress: true 

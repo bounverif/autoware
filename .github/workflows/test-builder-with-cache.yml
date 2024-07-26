@@ -7,6 +7,10 @@ on:
     paths:
       - .github/workflows/test-builder-with-cache.yml # Self-trigger
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-package-with-cache:
     runs-on: ubuntu-latest
