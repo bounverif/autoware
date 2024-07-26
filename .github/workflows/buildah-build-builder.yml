@@ -104,14 +104,14 @@ jobs:
           tags: ${{ steps.build-builder-with-cache.outputs.tags }}
 
   buildah-build-devel:
-    needs: build-builder
+    needs: buildah-build-builder
     uses: ./.github/workflows/buildah-build-devel.yml
     concurrency:
       group: buildah-build-devel-${{ github.ref }}
       cancel-in-progress: true 
 
   test-builder-with-cache:
-    needs: build-builder
+    needs: buildah-build-builder
     uses: ./.github/workflows/test-builder-with-cache.yml
     concurrency:
       group: test-builder-with-cache-${{ github.ref }}
