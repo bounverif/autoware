@@ -15,10 +15,6 @@ env:
   CONTAINERS_ROOT: /home/runner/.local/share/containers
   TMPDIR: /home/runner/.local/share/containers/tmp
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
   packages: write
@@ -27,7 +23,7 @@ jobs:
   buildah-build-builder:
     runs-on: ubuntu-24.04
     concurrency:
-      group: buildah-build-devel-core-${{ github.ref }}
+      group: ${{ github.workflow }}-${{ github.ref }}
       cancel-in-progress: true 
     steps:
       - name: Maximize build space
@@ -116,6 +112,4 @@ jobs:
   test-builder-with-cache:
     needs: buildah-build-builder
     uses: ./.github/workflows/test-builder-with-cache.yml
-    concurrency:
-      group: test-builder-with-cache-${{ github.ref }}
-      cancel-in-progress: true 
+    

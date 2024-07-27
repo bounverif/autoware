@@ -24,7 +24,7 @@ permissions:
   packages: write
 
 jobs:
-  autoware-devel-build:
+  buildah-build-devel:
     runs-on: ubuntu-24.04
     if: >- 
       github.event_name == 'workflow_dispatch' || 
