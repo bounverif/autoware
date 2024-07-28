@@ -56,14 +56,10 @@ ARG ROS_DISTRO=humble
 ENV ROS_DISTRO=${ROS_DISTRO}
 
 # Repository management
-RUN <<END /bin/bash -eux
-wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" | gpg --dearmour -o /usr/share/keyrings/ros-archive-keyring.gpg
-echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu jammy main" > /etc/apt/sources.list.d/ros2.list
-
-wget -q ${CUDA_KEYRING_FILEPATH} 
-dpkg -i ${CUDA_KEYRING_PACKAGE}
-rm ${CUDA_KEYRING_PACKAGE}
-END
+RUN set -eux;\
+    wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" | gpg --dearmour -o /usr/share/keyrings/ros-archive-keyring.gpg;\
+    echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu jammy main" > /etc/apt/sources.list.d/ros2.list;\
+    wget -q ${CUDA_KEYRING_FILEPATH} && dpkg -i ${CUDA_KEYRING_PACKAGE} && rm ${CUDA_KEYRING_PACKAGE}
 
 # User management 
 ARG USER=bounverif
@@ -71,6 +67,7 @@ ARG USERGROUP=${USER}
 ARG UID=1000
 ARG GID=${UID}
 
-RUN groupadd ${USERGROUP} -g ${GID} && \
-    useradd -lms /bin/bash ${USER} -g ${USERGROUP} -u ${UID} && \
+RUN set -eux;\
+    groupadd ${USERGROUP} -g ${GID};\
+    useradd -lms /bin/bash ${USER} -g ${USERGROUP} -u ${UID};\
     printf "%s ALL= NOPASSWD: ALL\\n" ${USER} >> /etc/sudoers
