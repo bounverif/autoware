@@ -39,7 +39,7 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
     --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
     mkdir -p /etc/autoware && vcs export --exact-with-tags ${AUTOWARE_SOURCE_DIR} > /etc/autoware/autoware.repos.yml && \
     export DEBIAN_FRONTEND=noninteractive && \
-    apt update && \
+    apt-get update && \
     rosdep init && \
     rosdep update -q && \
     rosdep install -qy \
@@ -54,10 +54,10 @@ ENV CMAKE_CXX_COMPILER_LAUNCHER=ccache
 ENV CMAKE_CUDA_COMPILER_LAUNCHER=ccache
 
 # Set environment variables for all users 
-RUN printf "CMAKE_GENERATOR=${CMAKE_GENERATOR}\\n" >> /etc/environment && \
-    printf "CMAKE_C_COMPILER_LAUNCHER=${CMAKE_C_COMPILER_LAUNCHER}\\n" >> /etc/environment && \
-    printf "CMAKE_CXX_COMPILER_LAUNCHER=${CMAKE_CXX_COMPILER_LAUNCHER}\\n" >> /etc/environment && \
-    printf "CMAKE_CUDA_COMPILER_LAUNCHER=${CMAKE_CUDA_COMPILER_LAUNCHER}\\n" >> /etc/environment
+RUN printf "CMAKE_GENERATOR=%s\\n" ${CMAKE_GENERATOR} >> /etc/environment && \
+    printf "CMAKE_C_COMPILER_LAUNCHER=%s\\n" ${CMAKE_C_COMPILER_LAUNCHER} >> /etc/environment && \
+    printf "CMAKE_CXX_COMPILER_LAUNCHER=%s\\n" ${CMAKE_CXX_COMPILER_LAUNCHER} >> /etc/environment && \
+    printf "CMAKE_CUDA_COMPILER_LAUNCHER=%s\\n" ${CMAKE_CUDA_COMPILER_LAUNCHER} >> /etc/environment
 
 # Ccache configuration
 COPY etc/ccache.conf /etc/ccache.conf

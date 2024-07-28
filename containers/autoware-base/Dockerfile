@@ -57,7 +57,7 @@ ENV ROS_DISTRO=${ROS_DISTRO}
 
 # Repository management
 RUN <<END
-set -euxo pipefail
+set -eux
 
 wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" | gpg --dearmour -o /usr/share/keyrings/ros-archive-keyring.gpg
 echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu jammy main" > /etc/apt/sources.list.d/ros2.list
@@ -74,7 +74,7 @@ ARG UID=1000
 ARG GID=${UID}
 
 RUN groupadd ${USERGROUP} -g ${GID} && \
-    useradd -ms /bin/bash ${USER} -g ${USERGROUP} -u ${UID} && \
-    printf "${USER} ALL= NOPASSWD: ALL\\n" >> /etc/sudoers
+    useradd -lms /bin/bash ${USER} -g ${USERGROUP} -u ${UID} && \
+    printf "%s ALL= NOPASSWD: ALL\\n" ${USER} >> /etc/sudoers
 
 ENV TARGETPLATFORM=${TARGETPLATFORM}
