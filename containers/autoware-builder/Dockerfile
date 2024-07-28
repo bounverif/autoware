@@ -7,14 +7,15 @@ ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update -qq && \
-    apt-get install -qy --no-install-recommends \
+    apt-get install -qqy --no-install-recommends \
         git \
         python3-minimal \
         python3-vcstool \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autoware/autoware.repos.yml \
-    mkdir -p ${AUTOWARE_SOURCE_DIR} && vcs import --shallow ${AUTOWARE_SOURCE_DIR} < /etc/autoware/autoware.repos.yml
+    mkdir -p ${AUTOWARE_SOURCE_DIR} && \
+    vcs import --shallow ${AUTOWARE_SOURCE_DIR} < /etc/autoware/autoware.repos.yml
 
 FROM ${BASE_IMAGE}:${AUTOWARE_VERSION}-base AS autoware-builder
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
@@ -22,7 +23,7 @@ ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update -qq && \
-    apt-get install -qy --no-install-recommends \
+    apt-get install -qqy --no-install-recommends \
         build-essential \
         git \
         cmake \
@@ -37,7 +38,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
 
 RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=${AUTOWARE_SOURCE_DIR} \
     --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
-    mkdir -p /etc/autoware && vcs export --exact-with-tags ${AUTOWARE_SOURCE_DIR} > /etc/autoware/autoware.repos.yml && \
+    mkdir -p /etc/autoware && vcs export --exact ${AUTOWARE_SOURCE_DIR} > /etc/autoware/autoware.repos.yml && \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     rosdep init && \

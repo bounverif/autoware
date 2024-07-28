@@ -76,5 +76,3 @@ ARG GID=${UID}
 RUN groupadd ${USERGROUP} -g ${GID} && \
     useradd -lms /bin/bash ${USER} -g ${USERGROUP} -u ${UID} && \
     printf "%s ALL= NOPASSWD: ALL\\n" ${USER} >> /etc/sudoers
-
-ENV TARGETPLATFORM=${TARGETPLATFORM}
