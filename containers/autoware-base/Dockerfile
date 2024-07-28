@@ -35,25 +35,29 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
         ca-certificates \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
-# Autoware default directories
-ENV AUTOWARE_SOURCE_DIR=/tmp/src
-ENV AUTOWARE_BUILD_DIR=/tmp/build
-ENV AUTOWARE_INSTALL_DIR=/opt/autoware
-
 # CUDA Toolkit configuaration
-ARG CUDA_ARCH=x86_64
-ARG CUDA_DISTRO=ubuntu2204
-ARG CUDA_KEYRING_PACKAGE=cuda-keyring_1.1-1_all.deb
-ARG CUDA_KEYRING_FILEPATH=https://developer.download.nvidia.com/compute/cuda/repos/${CUDA_DISTRO}/${CUDA_ARCH}/${CUDA_KEYRING_PACKAGE}
-ARG CUDA_TOOLKIT_VERSION_MAJOR=12
-ARG CUDA_TOOLKIT_VERSION_MINOR=4
+ARG \
+CUDA_ARCH=x86_64 \
+CUDA_DISTRO=ubuntu2204 \
+CUDA_KEYRING_PACKAGE=cuda-keyring_1.1-1_all.deb \ 
+CUDA_KEYRING_FILEPATH=https://developer.download.nvidia.com/compute/cuda/repos/${CUDA_DISTRO}/${CUDA_ARCH}/${CUDA_KEYRING_PACKAGE} \
+CUDA_TOOLKIT_VERSION_MAJOR=12 \
+CUDA_TOOLKIT_VERSION_MINOR=4
 
-ENV CUDA_TOOLKIT_VERSION=${CUDA_TOOLKIT_VERSION_MAJOR}.${CUDA_TOOLKIT_VERSION_MINOR}
-ENV CUDA_TOOLKIT_VERSION_DASHED=${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR}
+ENV \
+CUDA_TOOLKIT_VERSION=${CUDA_TOOLKIT_VERSION_MAJOR}.${CUDA_TOOLKIT_VERSION_MINOR} \
+CUDA_TOOLKIT_VERSION_DASHED=${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR}
 
 # ROS configuration
 ARG ROS_DISTRO=humble   
 ENV ROS_DISTRO=${ROS_DISTRO}
+
+# Autoware default directories
+ENV \
+AUTOWARE_SOURCE_DIR=/tmp/src \
+AUTOWARE_BUILD_DIR=/tmp/build \
+AUTOWARE_INSTALL_DIR=/opt/autoware \
+AUTOWARE_DATA_DIR=/opt/autoware/data
 
 # Repository management
 RUN set -eux;\
@@ -62,12 +66,12 @@ RUN set -eux;\
     wget -q ${CUDA_KEYRING_FILEPATH} && dpkg -i ${CUDA_KEYRING_PACKAGE} && rm ${CUDA_KEYRING_PACKAGE}
 
 # User management 
-ARG USER=bounverif
-ARG USERGROUP=${USER}
-ARG UID=1000
-ARG GID=${UID}
+# ARG USER=bounverif
+# ARG USERGROUP=${USER}
+# ARG UID=1000
+# ARG GID=${UID}
 
-RUN set -eux;\
-    groupadd ${USERGROUP} -g ${GID};\
-    useradd -lms /bin/bash ${USER} -g ${USERGROUP} -u ${UID};\
-    printf "%s ALL= NOPASSWD: ALL\\n" ${USER} >> /etc/sudoers
+# RUN set -eux;\
+#     groupadd ${USERGROUP} -g ${GID};\
+#     useradd -lms /bin/bash ${USER} -g ${USERGROUP} -u ${UID};\
+#     printf "%s ALL= NOPASSWD: ALL\\n" ${USER} >> /etc/sudoers
