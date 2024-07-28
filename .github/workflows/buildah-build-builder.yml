@@ -5,6 +5,7 @@ on:
     - cron: "30 12 * * 0" # 12:30 UTC every Sunday
   push:
     paths:
+      - containers/autoware-base/**
       - containers/autoware-builder/**
       - .github/workflows/buildah-build-builder.yml # Self-trigger
 
