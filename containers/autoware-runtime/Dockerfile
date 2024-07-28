@@ -1,6 +1,7 @@
-ARG BASE_IMAGE=ghcr.io/bounverif/autoware
+ARG BASE_IMAGE=localhost/autoware
 ARG BASE_IMAGE_VERSION=latest
 FROM ${BASE_IMAGE}:${BASE_IMAGE_VERSION}-builder-with-cache AS autoware-prebuilt
+ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 COPY autoware.repos.yml /var/lib/autoware/autoware.repos.yml
 
@@ -31,11 +32,7 @@ RUN mkdir -p ${AUTOWARE_SOURCE_DIR} \
     && ccache -v --show-stats
 
 FROM docker.io/library/ubuntu:22.04 AS autoware-runtime-base
-
-ARG TARGETARCH
-ARG TARGETOS
-ARG TARGETPLATFORM
-ARG TARGETVARIANT
+ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 ARG ROS_DISTRO=humble   
 ENV ROS_DISTRO=${ROS_DISTRO}
@@ -79,13 +76,9 @@ RUN wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" |
     wget -q ${CUDA_KEYRING_FILEPATH} && dpkg -i ${CUDA_KEYRING_PACKAGE} && rm ${CUDA_KEYRING_PACKAGE}
 
 FROM autoware-runtime-base AS autoware-runtime
+ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 # This is not complete. It is just a placeholder for the final image.
-
-ARG TARGETARCH
-ARG TARGETOS
-ARG TARGETPLATFORM
-ARG TARGETVARIANT
 
 COPY --from=autoware-prebuilt ${AUTOWARE_INSTALL_DIR} ${AUTOWARE_INSTALL_DIR}
 
@@ -94,6 +87,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
     apt-get update && apt-get install -y --no-install-recommends \
         libcublas-12-4 \
         libcurand-12-4 \
+        libnvinfer8 \
+        libnvinfer-plugin8 \
+        libnvparsers8 \
+        libnvonnxparsers8 \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* 
 
 ENV NVIDIA_VISIBLE_DEVICES=all

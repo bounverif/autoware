@@ -52,6 +52,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Build base container image
+        id: build-base
+        uses: redhat-actions/buildah-build@v2
+        with:
+          platforms: linux/amd64
+          image: ${{ env.IMAGE_NAME }}
+          tags: ${{ env.AUTOWARE_VERSION }}-base latest-base
+          layers: true
+          oci: true
+          build-args: |
+            AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
+          extra-args: 
+            --target autoware-base
+          containerfiles: |
+            containers/autoware-base/Dockerfile
+
       - name: Build builder container image
         id: build-builder
         uses: redhat-actions/buildah-build@v2
@@ -63,8 +79,8 @@ jobs:
           oci: true
           build-args: |
             AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
-          extra-args: --target autoware-builder
-            --cache-to=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/cache
+          extra-args: 
+            --target autoware-builder
           containerfiles: |
             containers/autoware-builder/Dockerfile
 
@@ -83,6 +99,15 @@ jobs:
             --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/cache
           containerfiles: |
             containers/autoware-builder/Dockerfile
+
+      - name: Push to GitHub Container Repository
+        if: github.ref == 'refs/heads/main'
+        id: push-base-ghcr
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          image: ${{ steps.build-base.outputs.image }}
+          tags: ${{ steps.build-base.outputs.tags }}
 
       - name: Push to GitHub Container Repository
         if: github.ref == 'refs/heads/main'
