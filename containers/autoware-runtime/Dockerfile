@@ -1,12 +1,12 @@
-ARG BASE_IMAGE=localhost/autoware
-ARG BASE_IMAGE_VERSION=latest
-FROM ${BASE_IMAGE}:${BASE_IMAGE_VERSION}-builder-with-cache AS autoware-prebuilt
+ARG IMAGE_NAME=localhost/autoware
+ARG AUTOWARE_VERSION=latest
+
+FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-builder-with-cache AS autoware-prebuilt
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
-COPY autoware.repos.yml /var/lib/autoware/autoware.repos.yml
-
-RUN mkdir -p ${AUTOWARE_SOURCE_DIR} \
-    && vcs import --shallow ${AUTOWARE_SOURCE_DIR} < /var/lib/autoware/autoware.repos.yml && \
+RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autoware/autoware.repos.yml \
+    mkdir -p ${AUTOWARE_SOURCE_DIR} \
+    && vcs import --shallow ${AUTOWARE_SOURCE_DIR} < /etc/autoware/autoware.repos.yml && \
     ccache --zero-stats && \
     . /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon --log-base /dev/null build \
@@ -31,7 +31,7 @@ RUN mkdir -p ${AUTOWARE_SOURCE_DIR} \
     && rm -rf ${AUTOWARE_BUILD_DIR} \
     && ccache -v --show-stats
 
-FROM ${BASE_IMAGE}:${BASE_IMAGE_VERSION}-base AS autoware-runtime
+FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-base AS autoware-runtime
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 # This is not complete. It is just a placeholder for the final image.
