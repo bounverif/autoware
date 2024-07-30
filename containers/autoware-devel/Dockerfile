@@ -176,5 +176,5 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
     && rm -rf /tmp/build \
     && rm -rf /tmp/install
 
-FROM ${IMAGE_NAME}:${IMAGE_NAME_VERSION}-builder-with-cache AS autoware-devel
+FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-builder-with-cache AS autoware-devel
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT

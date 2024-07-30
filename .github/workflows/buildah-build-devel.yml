@@ -96,7 +96,7 @@ jobs:
           build-args: |
             AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
           extra-args: |
-            --target autoware-devel
+            --target autoware-builder-with-cache
           containerfiles: |
             containers/autoware-devel/Dockerfile
 
