@@ -105,7 +105,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
 
 RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=${AUTOWARE_SOURCE_DIR} \
     --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
-    mkdir -p /etc/autoware && vcs export --exact ${AUTOWARE_SOURCE_DIR} > /etc/autoware/autoware.repos.yml && \
+    mkdir -p /etc/autoware && vcs export --exact ${AUTOWARE_SOURCE_DIR} > /etc/autoware/autoware.repos.${AUTOWARE_VERSION}.yml && \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     rosdep init && \
