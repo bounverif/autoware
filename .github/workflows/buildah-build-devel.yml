@@ -1,11 +1,11 @@
 name: buildah-build-devel
-run-name: Autoware devel container build
-
 on:
   workflow_dispatch:
-  workflow_call:
+  schedule:
+    - cron: "30 12 * * 0" # 12:30 UTC every Sunday
   push:
     paths:
+      - containers/autoware-devel/**
       - .github/workflows/buildah-build-devel.yml # Self-trigger
 
 env:
@@ -15,10 +15,6 @@ env:
   CONTAINERS_ROOT: /home/runner/.local/share/containers
   TMPDIR: /home/runner/.local/share/containers/tmp
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
-
 permissions:
   contents: read
   packages: write
@@ -26,6 +22,9 @@ permissions:
 jobs:
   buildah-build-devel:
     runs-on: ubuntu-24.04
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true 
     steps:
       - name: Maximize build space
         uses: easimon/maximize-build-space@v10
@@ -43,6 +42,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set current date as the version
+        run: echo "AUTOWARE_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
+
       - name: Log in to the GitHub Container registry
         uses: redhat-actions/podman-login@v1
         with:
@@ -50,24 +52,98 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Build base container image
+        id: build-base
+        uses: redhat-actions/buildah-build@v2
+        with:
+          platforms: linux/amd64
+          image: ${{ env.IMAGE_NAME }}
+          tags: ${{ env.AUTOWARE_VERSION }}-base latest-base
+          layers: true
+          oci: true
+          build-args: |
+            AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
+          extra-args: |
+            --target autoware-base
+          containerfiles: |
+            containers/autoware-devel/Dockerfile
+
+      - name: Build builder container image
+        id: build-builder
+        uses: redhat-actions/buildah-build@v2
+        with:
+          platforms: linux/amd64
+          image: ${{ env.IMAGE_NAME }}
+          tags: ${{ env.AUTOWARE_VERSION }}-builder latest-builder
+          layers: true
+          oci: true
+          build-args: |
+            AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
+          extra-args: |
+            --target autoware-builder
+          containerfiles: |
+            containers/autoware-devel/Dockerfile
+
+      - name: Build builder-with-cache container image
+        id: build-builder-with-cache
+        uses: redhat-actions/buildah-build@v2
+        with:
+          platforms: linux/amd64
+          image: ${{ env.IMAGE_NAME }}
+          tags: ${{ env.AUTOWARE_VERSION }}-builder-with-cache latest-builder-with-cache
+          layers: true
+          oci: true
+          build-args: |
+            AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
+          extra-args: |
+            --target autoware-devel
+          containerfiles: |
+            containers/autoware-devel/Dockerfile
+
       - name: Build devel container image
         id: build-devel
         uses: redhat-actions/buildah-build@v2
         with:
           platforms: linux/amd64
           image: ${{ env.IMAGE_NAME }}
-          tags: latest-devel
+          tags: ${{ env.AUTOWARE_VERSION }}-devel latest-devel
           layers: true
           oci: true
-          extra-args: --target autoware-devel
+          build-args: |
+            AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
+          extra-args: |
+            --target autoware-devel
           containerfiles: |
             containers/autoware-devel/Dockerfile
 
       - name: Push to GitHub Container Repository
         if: github.ref == 'refs/heads/main'
-        id: push-devel-ghcr
+        id: push-base-ghcr
         uses: redhat-actions/push-to-registry@v2
         with:
           registry: ${{ env.REGISTRY }}
-          image: ${{ steps.build-devel.outputs.image }}
-          tags: ${{ steps.build-devel.outputs.tags }}
+          image: ${{ steps.build-base.outputs.image }}
+          tags: ${{ steps.build-base.outputs.tags }}
+
+      - name: Push to GitHub Container Repository
+        if: github.ref == 'refs/heads/main'
+        id: push-builder-ghcr
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          image: ${{ steps.build-builder.outputs.image }}
+          tags: ${{ steps.build-builder.outputs.tags }}
+
+      - name: Push to GitHub Container Repository
+        if: github.ref == 'refs/heads/main'
+        id: push-builder-with-cache-ghcr
+        uses: redhat-actions/push-to-registry@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          image: ${{ steps.build-builder-with-cache.outputs.image }}
+          tags: ${{ steps.build-builder-with-cache.outputs.tags }}
+
+  test-builder-with-cache:
+    needs: buildah-build-devel
+    uses: ./.github/workflows/test-builder-with-cache.yml
+    
