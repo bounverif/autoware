@@ -62,12 +62,6 @@ RUN set -eux;\
     unset CUDA_KEYRING_FILEPATH
 
 # User management 
-# ARG USER=bounverif
-# ARG USERGROUP=${USER}
-# ARG UID=1000
-# ARG GID=${UID}
-
-# RUN set -eux;\
-#     groupadd ${USERGROUP} -g ${GID};\
-#     useradd -lms /bin/bash ${USER} -g ${USERGROUP} -u ${UID};\
-#     printf "%s ALL= NOPASSWD: ALL\\n" ${USER} >> /etc/sudoers
+RUN groupadd bounverif -g 1000 && \
+    useradd -lms /bin/bash bounverif -g bounverif -u 1000 && \
+    printf "%s ALL= NOPASSWD: ALL\\n" bounverif >> /etc/sudoers

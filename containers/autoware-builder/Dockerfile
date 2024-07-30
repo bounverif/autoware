@@ -49,23 +49,6 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
         --rosdistro ${ROS_DISTRO} \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* 
 
-ENV CMAKE_GENERATOR=Ninja
-ENV CMAKE_C_COMPILER_LAUNCHER=ccache
-ENV CMAKE_CXX_COMPILER_LAUNCHER=ccache
-ENV CMAKE_CUDA_COMPILER_LAUNCHER=ccache
-
-# Set environment variables for all users 
-RUN printf "CMAKE_GENERATOR=%s\\n" ${CMAKE_GENERATOR} >> /etc/environment && \
-    printf "CMAKE_C_COMPILER_LAUNCHER=%s\\n" ${CMAKE_C_COMPILER_LAUNCHER} >> /etc/environment && \
-    printf "CMAKE_CXX_COMPILER_LAUNCHER=%s\\n" ${CMAKE_CXX_COMPILER_LAUNCHER} >> /etc/environment && \
-    printf "CMAKE_CUDA_COMPILER_LAUNCHER=%s\\n" ${CMAKE_CUDA_COMPILER_LAUNCHER} >> /etc/environment
-
-# Ccache configuration
-COPY etc/ccache.conf /etc/ccache.conf
-RUN export CCACHE_DIR=$(ccache --get-config cache_dir) && \ 
-    mkdir -p ${CCACHE_DIR} && \
-    chmod 777 ${CCACHE_DIR}
-
 # CUDA Toolkit Installation
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
@@ -84,6 +67,18 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 RUN update-alternatives --set cuda /usr/local/cuda-${CUDA_TOOLKIT_VERSION}
+
+# Environment management
+ENV \
+CCACHE_DIR=/var/cache/ccache \
+CCACHE_BASEDIR=/tmp \
+CMAKE_GENERATOR=Ninja \
+CMAKE_C_COMPILER_LAUNCHER=ccache \
+CMAKE_CXX_COMPILER_LAUNCHER=ccache \
+CMAKE_CUDA_COMPILER_LAUNCHER=ccache
+
+# Ccache configuration
+RUN mkdir -p ${CCACHE_DIR} && chmod 777 ${CCACHE_DIR}
 
 FROM ${BASE_IMAGE}:${AUTOWARE_VERSION}-builder AS autoware-builder-with-cache
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
