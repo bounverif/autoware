@@ -59,7 +59,9 @@ RUN set -eux;\
     wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" | gpg --dearmour -o /usr/share/keyrings/ros-archive-keyring.gpg;\
     echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu jammy main" > /etc/apt/sources.list.d/ros2.list;\
     export CUDA_KEYRING_FILEPATH=${CUDA_TOOLKIT_REPOSITORY_URL}/${CUDA_DISTRO}/${CUDA_ARCH}/${CUDA_KEYRING_PACKAGE};\
-    wget -q ${CUDA_KEYRING_FILEPATH} && dpkg -i ${CUDA_KEYRING_PACKAGE} && rm ${CUDA_KEYRING_PACKAGE};\
+    wget -q ${CUDA_KEYRING_FILEPATH} && \
+    dpkg -i ${CUDA_KEYRING_PACKAGE} && \
+    rm ${CUDA_KEYRING_PACKAGE} && \
     unset CUDA_KEYRING_FILEPATH
 
 # User management 
@@ -139,10 +141,12 @@ RUN update-alternatives --set cuda /usr/local/cuda-${CUDA_TOOLKIT_VERSION}
 ENV \
 CCACHE_DIR=/var/cache/ccache \
 CCACHE_BASEDIR=/tmp \
-CMAKE_GENERATOR=Ninja \
+CMAKE_BUILD_TYPE=Release \
 CMAKE_C_COMPILER_LAUNCHER=ccache \
 CMAKE_CXX_COMPILER_LAUNCHER=ccache \
-CMAKE_CUDA_COMPILER_LAUNCHER=ccache
+CMAKE_CUDA_COMPILER_LAUNCHER=ccache \
+CMAKE_EXPORT_COMPILE_COMMANDS=ON \
+CMAKE_GENERATOR=Ninja
 
 # Ccache configuration
 # RUN mkdir -p ${CCACHE_DIR} && chmod 777 ${CCACHE_DIR}
@@ -170,7 +174,6 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
             summary+ \
             desktop_notification- \
         --cmake-args \
-            -DCMAKE_BUILD_TYPE=Release \
             " -Wno-dev" \
             " --no-warn-unused-cli" \
     && rm -rf /tmp/build \
