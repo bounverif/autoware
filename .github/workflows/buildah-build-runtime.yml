@@ -62,10 +62,11 @@ jobs:
           layers: true
           oci: true
           build-args: |
+            IMAGE_NAME=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
             AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
           extra-args:
             --target autoware-runtime
-            --cache-from=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/cache
+            --squash
           containerfiles: |
             containers/autoware-runtime/Dockerfile
 
