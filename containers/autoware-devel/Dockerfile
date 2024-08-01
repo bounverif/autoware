@@ -177,7 +177,7 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
         --cmake-args \
             " -Wno-dev" \
             " --no-warn-unused-cli" \
-    && rm -rf /tmp/autoware \
+    && rm -rf /tmp/autoware
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-builder-with-cache AS autoware-devel
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
