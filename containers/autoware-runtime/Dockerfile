@@ -4,7 +4,7 @@ ARG AUTOWARE_VERSION=latest
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-builder-with-cache AS autoware-prebuilt
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
-RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autoware/autoware.repos.yml set -eux \
+RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autoware/autoware.repos.yml set -ex \
     ; mkdir -p ${AUTOWARE_SOURCE_DIR} \
     ; vcs import --shallow ${AUTOWARE_SOURCE_DIR} < /etc/autoware/autoware.repos.yml \
     ; ccache --zero-stats \
