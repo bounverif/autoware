@@ -45,10 +45,10 @@ ROS_DISTRO=humble
 
 # Environment variables
 ENV \
-AUTOWARE_BUILD_DIR=/tmp/build \
+AUTOWARE_BUILD_DIR=/tmp/autoware/build \
 AUTOWARE_DATA_DIR=/opt/autoware/data \
 AUTOWARE_INSTALL_DIR=/opt/autoware \
-AUTOWARE_SOURCE_DIR=/tmp/src \
+AUTOWARE_SOURCE_DIR=/tmp/autoware/src \
 AUTOWARE_VERSION=${AUTOWARE_VERSION:-latest} \
 CUDA_TOOLKIT_VERSION=${CUDA_TOOLKIT_VERSION_MAJOR}.${CUDA_TOOLKIT_VERSION_MINOR} \
 CUDA_TOOLKIT_VERSION_DASHED=${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR} \
@@ -107,7 +107,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
 
 RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=${AUTOWARE_SOURCE_DIR} \
     --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
-    mkdir -p /etc/autoware && vcs export --exact ${AUTOWARE_SOURCE_DIR} > /etc/autoware/autoware.repos.${AUTOWARE_VERSION}.yml && \
+    mkdir -p /etc/autoware && \
+    vcs export --exact ${AUTOWARE_SOURCE_DIR} > /etc/autoware/autoware.repos.${AUTOWARE_VERSION}.yml && \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     rosdep init && \
@@ -157,12 +158,12 @@ ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 # This build is only for producing a build cache to be saved in the image.
 # Hence, we do not want build artifacts and logs.
 #
-RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=/tmp/src \
+RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=/tmp/autoware/src \
     . /opt/ros/${ROS_DISTRO}/setup.sh && \
     colcon --log-base /dev/null build \
-        --base-paths /tmp/src \
-        --build-base /tmp/build \
-        --install-base /tmp/install \
+        --base-paths /tmp/autoware/src \
+        --build-base /tmp/autoware/build \
+        --install-base /tmp/autoware/install \
         --packages-up-to autoware_launch \
         --event-handlers \
             console_direct- \
@@ -176,8 +177,7 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
         --cmake-args \
             " -Wno-dev" \
             " --no-warn-unused-cli" \
-    && rm -rf /tmp/build \
-    && rm -rf /tmp/install
+    && rm -rf /tmp/autoware \
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-builder-with-cache AS autoware-devel
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
