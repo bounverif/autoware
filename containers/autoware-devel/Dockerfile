@@ -159,6 +159,7 @@ ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 # Hence, we do not want build artifacts and logs.
 #
 RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=${AUTOWARE_SOURCE_DIR} \
+    mkdir -p /tmp/autoware && \
     ln -s ${AUTOWARE_SOURCE_DIR} /tmp/autoware/src && \
     . /opt/ros/${ROS_DISTRO}/setup.sh && \
     export CCACHE_BASEDIR=/tmp/autoware && \
