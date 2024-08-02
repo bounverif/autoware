@@ -43,17 +43,6 @@ CUDA_TOOLKIT_VERSION_MAJOR=12 \
 CUDA_TOOLKIT_VERSION_MINOR=4 \
 ROS_DISTRO=humble   
 
-# Environment variables
-ENV \
-AUTOWARE_BUILD_DIR=/tmp/autoware/build \
-AUTOWARE_DATA_DIR=/opt/autoware/data \
-AUTOWARE_INSTALL_DIR=/opt/autoware \
-AUTOWARE_SOURCE_DIR=/tmp/autoware/src \
-AUTOWARE_VERSION=${AUTOWARE_VERSION:-latest} \
-CUDA_TOOLKIT_VERSION=${CUDA_TOOLKIT_VERSION_MAJOR}.${CUDA_TOOLKIT_VERSION_MINOR} \
-CUDA_TOOLKIT_VERSION_DASHED=${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR} \
-ROS_DISTRO=${ROS_DISTRO:-humble}
-
 # Repository management
 RUN set -eux;\
     wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" | gpg --dearmour -o /usr/share/keyrings/ros-archive-keyring.gpg;\
@@ -68,6 +57,19 @@ RUN set -eux;\
 RUN groupadd bounverif -g 1000 && \
     useradd -lms /bin/bash bounverif -g bounverif -u 1000 && \
     printf "%s ALL= NOPASSWD: ALL\\n" bounverif >> /etc/sudoers
+
+# Environment variables
+ENV AUTOWARE_ROOT=/root/autoware 
+ENV AUTOWARE_SOURCE_DIR=${AUTOWARE_ROOT}/src 
+ENV AUTOWARE_BUILD_DIR=${AUTOWARE_ROOT}/build
+ENV AUTOWARE_DATA_DIR=${AUTOWARE_ROOT}/data 
+ENV AUTOWARE_INSTALL_DIR=/opt/autoware
+ENV AUTOWARE_VERSION=${AUTOWARE_VERSION:-latest} 
+ENV ROS_DISTRO=${ROS_DISTRO:-humble}
+
+# Cuda variables
+ENV CUDA_TOOLKIT_VERSION=${CUDA_TOOLKIT_VERSION_MAJOR}.${CUDA_TOOLKIT_VERSION_MINOR} 
+ENV CUDA_TOOLKIT_VERSION_DASHED=${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR}
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-base AS autoware-source
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
@@ -140,8 +142,6 @@ RUN update-alternatives --set cuda /usr/local/cuda-${CUDA_TOOLKIT_VERSION}
 
 # Environment management
 ENV \
-CCACHE_DIR=/var/cache/ccache \
-CCACHE_BASEDIR=/tmp \
 CMAKE_BUILD_TYPE=Release \
 CMAKE_C_COMPILER_LAUNCHER=ccache \
 CMAKE_CXX_COMPILER_LAUNCHER=ccache \
@@ -150,7 +150,7 @@ CMAKE_EXPORT_COMPILE_COMMANDS=ON \
 CMAKE_GENERATOR=Ninja
 
 # Ccache configuration
-# RUN mkdir -p ${CCACHE_DIR} && chmod 777 ${CCACHE_DIR}
+COPY etc/ccache.conf /etc/ccache.conf
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-builder AS autoware-builder-with-cache
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
@@ -158,8 +158,10 @@ ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 # This build is only for producing a build cache to be saved in the image.
 # Hence, we do not want build artifacts and logs.
 #
-RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=/tmp/autoware/src \
+RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=${AUTOWARE_SOURCE_DIR} \
+    ln -s ${AUTOWARE_SOURCE_DIR} /tmp/autoware/src \
     . /opt/ros/${ROS_DISTRO}/setup.sh && \
+    export CCACHE_BASEDIR=/tmp/autoware && \
     colcon --log-base /dev/null build \
         --base-paths /tmp/autoware/src \
         --build-base /tmp/autoware/build \
@@ -177,7 +179,8 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
         --cmake-args \
             " -Wno-dev" \
             " --no-warn-unused-cli" \
-    && rm -rf /tmp/autoware
+    && rm -rf /tmp/autoware/
+
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-builder-with-cache AS autoware-devel
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
