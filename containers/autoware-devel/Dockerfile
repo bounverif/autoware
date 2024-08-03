@@ -151,6 +151,9 @@ CMAKE_GENERATOR=Ninja
 # Ccache configuration
 COPY etc/ccache.conf /etc/ccache.conf
 
+RUN export CCACHE_DIR=$(ccache --get-config cache_dir) && \
+    mkdir -p ${CCACHE_DIR} && chmod 777 ${CCACHE_DIR}
+
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-builder AS autoware-builder-with-cache
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 #

@@ -1,0 +1,6 @@
+# ROS directories
+src/
+build/
+log/
+install/
+debug/

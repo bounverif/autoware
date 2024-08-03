@@ -18,6 +18,7 @@ RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autowar
         --build-base ${AUTOWARE_BUILD_DIR} \
         --install-base ${AUTOWARE_INSTALL_DIR} \
         --packages-up-to autoware_launch \
+        --parallel-workers 4 \
         --event-handlers \
             console_direct- \
             console_stderr+ \
