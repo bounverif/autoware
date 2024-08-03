@@ -8,10 +8,10 @@ ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 RUN echo "${AUTOWARE_VERSION}"
 
 RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autoware/autoware.repos.yml set -ex \
-    ; set -ex \
     ; mkdir -p ${AUTOWARE_SOURCE_DIR} \
     ; vcs import --shallow ${AUTOWARE_SOURCE_DIR} < /etc/autoware/autoware.repos.yml \
     ; ccache --get-config base_dir \
+    ; export CCACHE_DEBUG=1 \
     ; ccache --zero-stats \
     ; . /opt/ros/${ROS_DISTRO}/setup.sh \
     ; colcon --log-base /dev/null build \
@@ -29,8 +29,8 @@ RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autowar
             summary+ \
             desktop_notification- \
         --cmake-args \
-            " -Wno-dev" \
-            " --no-warn-unused-cli" \
+            "-Wno-dev" \
+            "--no-warn-unused-cli" \
     ; rm -rf ${AUTOWARE_SOURCE_DIR} \
     ; rm -rf ${AUTOWARE_BUILD_DIR} \
     ; ccache -v --show-stats
