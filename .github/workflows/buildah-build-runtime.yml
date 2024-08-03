@@ -5,7 +5,8 @@ on:
     - cron: '30 16 * * 1-5' # 16:30 UTC every weekday
   push:
     paths:
-      - .github/workflows/buildah-build-runtime.yml # Self-trigger 
+      - .github/workflows/buildah-build-runtime.yml # Self-trigger
+      - containers/autoware-runtime/Dockerfile
 
 env:
   REGISTRY: ghcr.io/bounverif
@@ -56,14 +57,13 @@ jobs:
         id: build-runtime
         uses: redhat-actions/buildah-build@v2
         with:
-          platforms: linux/amd64
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ env.AUTOWARE_VERSION }}-runtime latest-runtime latest
           layers: true
           oci: true
           build-args: |
             IMAGE_NAME=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-            AUTOWARE_VERSION=latest
+            AUTOWARE_VERSION=${{ env.AUTOWARE_VERSION }}
           extra-args:
             --target autoware-runtime
           containerfiles: |
