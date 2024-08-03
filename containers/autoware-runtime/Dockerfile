@@ -1,15 +1,16 @@
 ARG IMAGE_NAME=localhost/autoware
-ARG AUTOWARE_BUILDER_VERSION=latest
+ARG AUTOWARE_DEVEL_VERSION=latest
 ARG AUTOWARE_VERSION=latest
 
-FROM ${IMAGE_NAME}:${AUTOWARE_BUILDER_VERSION}-builder-with-cache AS autoware-prebuilt
+FROM ${IMAGE_NAME}:${AUTOWARE_DEVEL_VERSION}-builder-with-cache AS autoware-prebuilt
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autoware/autoware.repos.yml set -ex \
     ; set -ex \
     ; mkdir -p ${AUTOWARE_SOURCE_DIR} \
     ; vcs import --shallow ${AUTOWARE_SOURCE_DIR} < /etc/autoware/autoware.repos.yml \
-    ; ccache --get-config base_dir \
+    ; export CCACHE_DEBUG=1 \
+    ; ccache --show-config \
     ; ccache --zero-stats \
     ; . /opt/ros/${ROS_DISTRO}/setup.sh \
     ; colcon --log-base /dev/null build \
@@ -33,7 +34,7 @@ RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autowar
     ; rm -rf ${AUTOWARE_BUILD_DIR} \
     ; ccache -v --show-stats
 
-FROM ${IMAGE_NAME}:${AUTOWARE_BUILDER_VERSION}-base AS autoware-runtime
+FROM ${IMAGE_NAME}:${AUTOWARE_DEVEL_VERSION}-base AS autoware-runtime
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 # This is not complete. It is just a placeholder for the final image.
@@ -41,8 +42,8 @@ ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt set -eux \
     ; export DEBIAN_FRONTEND=noninteractive \
     ; apt-get -qq update && apt-get install -qqy --no-install-recommends \
-        libcublas-12-4 \
-        libcurand-12-4 \
+        libcublas-${CUDA_TOOLKIT_VERSION_DASHED} \
+        libcurand-${CUDA_TOOLKIT_VERSION_DASHED} \
         libnvinfer8 \
         libnvinfer-plugin8 \
         libnvparsers8 \

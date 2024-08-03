@@ -34,7 +34,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
 ARG AUTOWARE_VERSION
 ENV AUTOWARE_DEVEL_VERSION=${AUTOWARE_VERSION:-latest}
 RUN echo "AUTOWARE_DEVEL_VERSION=${AUTOWARE_DEVEL_VERSION}" >> /etc/environment
-    
+
 # Build arguments
 ARG \
 CUDA_ARCH=x86_64 \
@@ -167,6 +167,7 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
         --build-base /tmp/autoware/build \
         --install-base /tmp/autoware/install \
         --packages-up-to autoware_launch \
+        --parallel-workers 4 \
         --event-handlers \
             console_direct- \
             console_stderr+ \
