@@ -7,7 +7,6 @@ ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 # Metadata
 LABEL \
 org.opencontainers.image.vendor="tr.edu.bogazici.cmpe.bounverif" \
-org.opencontainers.image.version=${AUTOWARE_VERSION} \
 org.opencontainers.image.authors="Bogazici University System Verification Group" \
 org.opencontainers.image.source="https://github.com/bounverif/autoware" \
 org.opencontainers.image.title="Autoware" \
@@ -32,6 +31,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
         ca-certificates \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
+ARG AUTOWARE_VERSION
+ENV AUTOWARE_DEVEL_VERSION=${AUTOWARE_VERSION:-latest}
+RUN echo "AUTOWARE_DEVEL_VERSION=${AUTOWARE_DEVEL_VERSION}" >> /etc/environment
+    
 # Build arguments
 ARG \
 CUDA_ARCH=x86_64 \
@@ -60,7 +63,6 @@ ENV AUTOWARE_SOURCE_DIR=${AUTOWARE_ROOT}/src
 ENV AUTOWARE_BUILD_DIR=${AUTOWARE_ROOT}/build
 ENV AUTOWARE_DATA_DIR=${AUTOWARE_ROOT}/data 
 ENV AUTOWARE_INSTALL_DIR=/opt/autoware
-ENV AUTOWARE_VERSION=${AUTOWARE_VERSION:-latest} 
 ENV ROS_DISTRO=${ROS_DISTRO:-humble}
 
 # Cuda variables
@@ -107,7 +109,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
 RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=${AUTOWARE_SOURCE_DIR} \
     --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
     mkdir -p /etc/autoware && \
-    vcs export --exact ${AUTOWARE_SOURCE_DIR} > /etc/autoware/autoware.repos.${AUTOWARE_VERSION}.yml && \
+    vcs export --exact ${AUTOWARE_SOURCE_DIR} > /etc/autoware/autoware.repos.${AUTOWARE_DEVEL_VERSION}.yml && \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update && \
     rosdep init && \

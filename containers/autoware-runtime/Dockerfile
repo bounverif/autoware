@@ -1,11 +1,9 @@
 ARG IMAGE_NAME=localhost/autoware
-ARG BUILDER_VERSION=latest
+ARG AUTOWARE_BUILDER_VERSION=latest
 ARG AUTOWARE_VERSION=latest
 
-FROM ${IMAGE_NAME}:${BUILDER_VERSION}-builder-with-cache AS autoware-prebuilt
+FROM ${IMAGE_NAME}:${AUTOWARE_BUILDER_VERSION}-builder-with-cache AS autoware-prebuilt
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
-
-RUN echo "${AUTOWARE_VERSION}"
 
 RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autoware/autoware.repos.yml set -ex \
     ; set -ex \
@@ -35,7 +33,7 @@ RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autowar
     ; rm -rf ${AUTOWARE_BUILD_DIR} \
     ; ccache -v --show-stats
 
-FROM ${IMAGE_NAME}:${BUILDER_VERSION}-base AS autoware-runtime
+FROM ${IMAGE_NAME}:${AUTOWARE_BUILDER_VERSION}-base AS autoware-runtime
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 # This is not complete. It is just a placeholder for the final image.
@@ -56,3 +54,7 @@ COPY --from=autoware-prebuilt ${AUTOWARE_INSTALL_DIR} ${AUTOWARE_INSTALL_DIR}
 
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
+
+ARG AUTOWARE_VERSION
+ENV AUTOWARE_RUNTIME_VERSION=${AUTOWARE_VERSION:-latest}
+RUN echo "AUTOWARE_RUNTIME_VERSION=${AUTOWARE_RUNTIME_VERSION}" >> /etc/environment
