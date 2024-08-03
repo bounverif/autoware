@@ -30,6 +30,7 @@ jobs:
         run: |
           mkdir -p src
           export CCACHE_BASEDIR=${PWD}
+          ccache --show-config
           vcs import src --shallow --input autoware.repos
           . /opt/ros/humble/setup.sh
           ccache --zero-stats
