@@ -34,14 +34,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
 
 # Build arguments
 ARG \
-AUTOWARE_VERSION=latest \
 CUDA_ARCH=x86_64 \
 CUDA_DISTRO=ubuntu2204 \
 CUDA_KEYRING_PACKAGE=cuda-keyring_1.1-1_all.deb \ 
-CUDA_TOOLKIT_REPOSITORY_URL=https://developer.download.nvidia.com/compute/cuda/repos \
-CUDA_TOOLKIT_VERSION_MAJOR=12 \
-CUDA_TOOLKIT_VERSION_MINOR=4 \
-ROS_DISTRO=humble   
+CUDA_TOOLKIT_REPOSITORY_URL=https://developer.download.nvidia.com/compute/cuda/repos
 
 # Repository management
 RUN set -eux;\
@@ -68,6 +64,7 @@ ENV AUTOWARE_VERSION=${AUTOWARE_VERSION:-latest}
 ENV ROS_DISTRO=${ROS_DISTRO:-humble}
 
 # Cuda variables
+ARG CUDA_TOOLKIT_VERSION_MAJOR=12 CUDA_TOOLKIT_VERSION_MINOR=6
 ENV CUDA_TOOLKIT_VERSION=${CUDA_TOOLKIT_VERSION_MAJOR}.${CUDA_TOOLKIT_VERSION_MINOR} 
 ENV CUDA_TOOLKIT_VERSION_DASHED=${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR}
 
@@ -181,7 +178,6 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
             " -Wno-dev" \
             " --no-warn-unused-cli" \
     && rm -rf /tmp/autoware/
-
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-builder-with-cache AS autoware-devel
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
