@@ -1,8 +1,10 @@
 ARG IMAGE_NAME=localhost/autoware
-ARG AUTOWARE_VERSION=latest
+ARG IMAGE_VERSION=latest
 
-FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-builder-with-cache AS autoware-prebuilt
+FROM ${IMAGE_NAME}:${IMAGE_VERSION}-builder-with-cache AS autoware-prebuilt
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
+
+RUN echo "${AUTOWARE_VERSION}" > /etc/autoware/autoware.version
 
 RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autoware/autoware.repos.yml set -ex \
     ; mkdir -p ${AUTOWARE_SOURCE_DIR} \
@@ -24,7 +26,6 @@ RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autowar
             summary+ \
             desktop_notification- \
         --cmake-args \
-            -DCMAKE_BUILD_TYPE=Release \
             " -Wno-dev" \
             " --no-warn-unused-cli" \
     ; rm -rf ${AUTOWARE_SOURCE_DIR} \
