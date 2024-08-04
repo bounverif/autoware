@@ -1,21 +1,19 @@
 ARG IMAGE_NAME=localhost/autoware
-ARG AUTOWARE_DEVEL_VERSION=latest
 ARG AUTOWARE_VERSION=latest
 
-FROM ${IMAGE_NAME}:${AUTOWARE_DEVEL_VERSION}-builder-with-cache AS autoware-prebuilt
+FROM ${IMAGE_NAME}:latest-builder-with-cache AS autoware-prebuilt
 # ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
+WORKDIR ${AUTOWARE_ROOT}
+
 RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autoware/autoware.repos.yml set -ex \
-    ; mkdir -p ${AUTOWARE_SOURCE_DIR} \
-    ; vcs import --shallow ${AUTOWARE_SOURCE_DIR} --input /etc/autoware/autoware.repos.yml \
+    ; mkdir -p src \
+    ; vcs import --shallow src --input /etc/autoware/autoware.repos.yml \
     ; export CCACHE_BASEDIR=${AUTOWARE_ROOT} \
     ; ccache --show-config \
     ; ccache --zero-stats \
     ; . /opt/ros/${ROS_DISTRO}/setup.sh \
     ; colcon --log-base /dev/null build \
-        --base-paths ${AUTOWARE_SOURCE_DIR} \
-        --build-base ${AUTOWARE_BUILD_DIR} \
-        --install-base ${AUTOWARE_INSTALL_DIR} \
         --packages-up-to autoware_launch \
         --parallel-workers 4 \
         --event-handlers \
@@ -24,14 +22,13 @@ RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autowar
             console_cohesion- \
             console_start_end- \
             console_package_list- \
-            status+ \
+            status- \
             summary+ \
             desktop_notification- \
-        --cmake-args -DCMAKE_BUILD_TYPE=Release \
     ; rm -rf ${AUTOWARE_ROOT} \
     ; ccache -v --show-stats
 
-FROM ${IMAGE_NAME}:${AUTOWARE_DEVEL_VERSION}-base AS autoware-runtime
+FROM ${IMAGE_NAME}:latest-base AS autoware-runtime
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 # This is not complete. It is just a placeholder for the final image.
@@ -49,7 +46,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
     ; apt-get autoremove -y \
     ; rm -rf /var/lib/apt/lists/* 
 
-COPY --from=autoware-prebuilt ${AUTOWARE_INSTALL_DIR} ${AUTOWARE_INSTALL_DIR}
+COPY --from=autoware-prebuilt ${AUTOWARE_ROOT}/install ${AUTOWARE_INSTALL_DIR}
 
 ENV NVIDIA_VISIBLE_DEVICES=all
 ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
