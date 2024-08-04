@@ -33,42 +33,37 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
 
 ARG AUTOWARE_VERSION
 ENV AUTOWARE_DEVEL_VERSION=${AUTOWARE_VERSION:-latest}
-RUN echo "AUTOWARE_DEVEL_VERSION=${AUTOWARE_DEVEL_VERSION}" >> /etc/environment
 
-# Build arguments
-ARG \
-CUDA_ARCH=x86_64 \
-CUDA_DISTRO=ubuntu2204 \
-CUDA_KEYRING_PACKAGE=cuda-keyring_1.1-1_all.deb \ 
+RUN <<END
+wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" | gpg --dearmour -o /usr/share/keyrings/ros-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu jammy main" > /etc/apt/sources.list.d/ros2.list
+END
+
+RUN <<END
+set -e
+CUDA_ARCH=x86_64
+CUDA_DISTRO=ubuntu2204
+CUDA_KEYRING_PACKAGE=cuda-keyring_1.1-1_all.deb 
 CUDA_TOOLKIT_REPOSITORY_URL=https://developer.download.nvidia.com/compute/cuda/repos
-
-# Repository management
-RUN set -eux;\
-    wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" | gpg --dearmour -o /usr/share/keyrings/ros-archive-keyring.gpg;\
-    echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu jammy main" > /etc/apt/sources.list.d/ros2.list;\
-    export CUDA_KEYRING_FILEPATH=${CUDA_TOOLKIT_REPOSITORY_URL}/${CUDA_DISTRO}/${CUDA_ARCH}/${CUDA_KEYRING_PACKAGE};\
-    wget -q ${CUDA_KEYRING_FILEPATH} && \
-    dpkg -i ${CUDA_KEYRING_PACKAGE} && \
-    rm ${CUDA_KEYRING_PACKAGE} && \
-    unset CUDA_KEYRING_FILEPATH
+CUDA_KEYRING_FILEPATH=${CUDA_TOOLKIT_REPOSITORY_URL}/${CUDA_DISTRO}/${CUDA_ARCH}/${CUDA_KEYRING_PACKAGE}
+wget -q ${CUDA_KEYRING_FILEPATH}
+dpkg -i ${CUDA_KEYRING_PACKAGE}
+rm ${CUDA_KEYRING_PACKAGE}
+END
 
 # User management 
 RUN groupadd bounverif -g 1000 && \
     useradd -lms /bin/bash bounverif -g bounverif -u 1000 && \
+    echo 'bounverif:bounverif' | chpasswd \
     printf "%s ALL= NOPASSWD: ALL\\n" bounverif >> /etc/sudoers
 
-# Environment variables
-ENV AUTOWARE_ROOT=/root/autoware 
-ENV AUTOWARE_SOURCE_DIR=${AUTOWARE_ROOT}/src 
-ENV AUTOWARE_BUILD_DIR=${AUTOWARE_ROOT}/build
-ENV AUTOWARE_DATA_DIR=${AUTOWARE_ROOT}/data 
-ENV AUTOWARE_INSTALL_DIR=/opt/autoware
-ENV ROS_DISTRO=${ROS_DISTRO:-humble}
-
-# Cuda variables
-ARG CUDA_TOOLKIT_VERSION_MAJOR=12 CUDA_TOOLKIT_VERSION_MINOR=6
-ENV CUDA_TOOLKIT_VERSION=${CUDA_TOOLKIT_VERSION_MAJOR}.${CUDA_TOOLKIT_VERSION_MINOR} 
-ENV CUDA_TOOLKIT_VERSION_DASHED=${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR}
+ENV \
+ROS_DISTRO=humble \
+AUTOWARE_ROOT=/root/autoware \
+AUTOWARE_SOURCE_DIR=/root/autoware/src \
+AUTOWARE_BUILD_DIR=/root/autoware/build \
+AUTOWARE_INSTALL_DIR=/opt/autoware \
+AUTOWARE_DATA_DIR=/opt/autoware/data
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-base AS autoware-source
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
@@ -121,14 +116,16 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* 
 
 # CUDA Toolkit Installation
+ARG CUDA_TOOLKIT_VERSION_MAJOR=12 
+ARG CUDA_TOOLKIT_VERSION_MINOR=6
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update -qq && \
     apt-get install -qy --no-install-recommends \
-        cuda-minimal-build-${CUDA_TOOLKIT_VERSION_DASHED} \
-        libcublas-dev-${CUDA_TOOLKIT_VERSION_DASHED} \
-        libcurand-dev-${CUDA_TOOLKIT_VERSION_DASHED} \
-        libcusolver-dev-${CUDA_TOOLKIT_VERSION_DASHED} \
+        cuda-minimal-build-${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR} \
+        libcublas-dev-${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR} \
+        libcurand-dev-${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR} \
+        libcusolver-dev-${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR} \
         libnvinfer-dev=8.* \
         libnvinfer-headers-dev=8.* \
         libnvinfer-plugin-dev=8.* \
@@ -137,9 +134,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
         libnvonnxparsers-dev=8.* \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
-RUN update-alternatives --set cuda /usr/local/cuda-${CUDA_TOOLKIT_VERSION}
+RUN update-alternatives --set cuda /usr/local/cuda-${CUDA_TOOLKIT_VERSION_MAJOR}.${CUDA_TOOLKIT_VERSION_MINOR}
 
-# Environment management
+# Build environment management
 ENV \
 CMAKE_BUILD_TYPE=Release \
 CMAKE_C_COMPILER_LAUNCHER=ccache \
@@ -150,9 +147,6 @@ CMAKE_GENERATOR=Ninja
 
 # Ccache configuration
 COPY etc/ccache.conf /etc/ccache.conf
-
-RUN export CCACHE_DIR=$(ccache --get-config cache_dir) && \
-    mkdir -p ${CCACHE_DIR} && chmod 777 ${CCACHE_DIR}
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-builder AS autoware-builder-with-cache
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
@@ -187,3 +181,18 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-builder-with-cache AS autoware-devel
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
+    export DEBIAN_FRONTEND=noninteractive && \
+    apt-get update -qq && \
+    apt-get install -qy --no-install-recommends \
+        nano \
+    && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+
+COPY etc/autoware/entrypoint.devel.sh /etc/autoware/entrypoint.devel.sh
+RUN chmod +x /etc/autoware/entrypoint.devel.sh
+
+USER bounverif
+WORKDIR /home/bounverif
+
+ENTRYPOINT ["/etc/autoware/entrypoint.devel.sh"]
