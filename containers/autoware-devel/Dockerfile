@@ -31,25 +31,17 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
         ca-certificates \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
-ARG AUTOWARE_VERSION
-ENV AUTOWARE_DEVEL_VERSION=${AUTOWARE_VERSION:-latest}
+RUN wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" | gpg --dearmour -o /usr/share/keyrings/ros-archive-keyring.gpg && \
+    echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu jammy main" > /etc/apt/sources.list.d/ros2.list
 
-RUN <<END
-wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" | gpg --dearmour -o /usr/share/keyrings/ros-archive-keyring.gpg
-echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu jammy main" > /etc/apt/sources.list.d/ros2.list
-END
-
-RUN <<END
-set -e
-CUDA_ARCH=x86_64
-CUDA_DISTRO=ubuntu2204
-CUDA_KEYRING_PACKAGE=cuda-keyring_1.1-1_all.deb 
-CUDA_TOOLKIT_REPOSITORY_URL=https://developer.download.nvidia.com/compute/cuda/repos
-CUDA_KEYRING_FILEPATH=${CUDA_TOOLKIT_REPOSITORY_URL}/${CUDA_DISTRO}/${CUDA_ARCH}/${CUDA_KEYRING_PACKAGE}
-wget -q ${CUDA_KEYRING_FILEPATH}
-dpkg -i ${CUDA_KEYRING_PACKAGE}
-rm ${CUDA_KEYRING_PACKAGE}
-END
+RUN CUDA_ARCH=x86_64 && \
+    CUDA_DISTRO=ubuntu2204 && \
+    CUDA_KEYRING_PACKAGE=cuda-keyring_1.1-1_all.deb && \
+    CUDA_TOOLKIT_REPOSITORY_URL=https://developer.download.nvidia.com/compute/cuda/repos && \
+    CUDA_KEYRING_FILEPATH=${CUDA_TOOLKIT_REPOSITORY_URL}/${CUDA_DISTRO}/${CUDA_ARCH}/${CUDA_KEYRING_PACKAGE} && \
+    wget -q ${CUDA_KEYRING_FILEPATH} && \
+    dpkg -i ${CUDA_KEYRING_PACKAGE} && \
+    rm ${CUDA_KEYRING_PACKAGE}
 
 # User management 
 RUN groupadd bounverif -g 1000 && \
@@ -64,6 +56,9 @@ AUTOWARE_SOURCE_DIR=/root/autoware/src \
 AUTOWARE_BUILD_DIR=/root/autoware/build \
 AUTOWARE_INSTALL_DIR=/opt/autoware \
 AUTOWARE_DATA_DIR=/opt/autoware/data
+
+ARG AUTOWARE_VERSION
+ENV AUTOWARE_DEVEL_VERSION=${AUTOWARE_VERSION:-latest}
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-base AS autoware-source
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
