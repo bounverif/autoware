@@ -4,17 +4,17 @@ ARG AUTOWARE_VERSION=latest
 FROM ${IMAGE_NAME}:latest-builder-with-cache AS autoware-prebuilt
 # ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
+ARG AUTOWARE_PACKAGES_UP_TO=autoware_launch
 WORKDIR ${AUTOWARE_ROOT}
 
 RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autoware/autoware.repos.yml set -ex \
     ; mkdir -p src \
     ; vcs import --shallow src --input /etc/autoware/autoware.repos.yml \
-    ; export CCACHE_BASEDIR=${AUTOWARE_ROOT} \
+    ; . /opt/ros/${ROS_DISTRO}/setup.sh \
     ; ccache --show-config \
     ; ccache --zero-stats \
-    ; . /opt/ros/${ROS_DISTRO}/setup.sh \
     ; colcon --log-base /dev/null build \
-        --packages-up-to autoware_launch \
+        --packages-up-to ${AUTOWARE_PACKAGES_UP_TO} \
         --parallel-workers 4 \
         --event-handlers \
             console_direct- \
@@ -25,7 +25,6 @@ RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autowar
             status- \
             summary+ \
             desktop_notification- \
-    ; rm -rf ${AUTOWARE_ROOT} \
     ; ccache -v --show-stats
 
 FROM ${IMAGE_NAME}:latest-base AS autoware-runtime
