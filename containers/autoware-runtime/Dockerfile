@@ -2,10 +2,11 @@ ARG IMAGE_NAME=localhost/autoware
 ARG AUTOWARE_VERSION=latest
 
 FROM ${IMAGE_NAME}:latest-builder-with-cache AS autoware-prebuilt
-# ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
+ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 ARG AUTOWARE_PACKAGES_UP_TO=autoware_launch
-WORKDIR ${AUTOWARE_ROOT}
+
+WORKDIR ${AUTOWARE_DEVEL_ROOT}
 
 RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autoware/autoware.repos.yml set -ex \
     ; mkdir -p src \
@@ -45,11 +46,12 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
     ; apt-get autoremove -y \
     ; rm -rf /var/lib/apt/lists/* 
 
-COPY --from=autoware-prebuilt ${AUTOWARE_ROOT}/install ${AUTOWARE_INSTALL_DIR}
-
-ENV NVIDIA_VISIBLE_DEVICES=all
-ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics
+ENV AUTOWARE_INSTALL_DIR=/opt/autoware
+COPY --from=autoware-prebuilt ${AUTOWARE_DEVEL_ROOT}/install ${AUTOWARE_INSTALL_DIR}
 
 ARG AUTOWARE_VERSION
 ENV AUTOWARE_RUNTIME_VERSION=${AUTOWARE_VERSION:-latest}
 RUN echo "AUTOWARE_RUNTIME_VERSION=${AUTOWARE_RUNTIME_VERSION}" >> /etc/environment
+
+ENV NVIDIA_VISIBLE_DEVICES=all
+ENV NVIDIA_DRIVER_CAPABILITIES=compute,utility,graphics

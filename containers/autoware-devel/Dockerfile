@@ -49,15 +49,15 @@ RUN groupadd bounverif -g 1000 && \
     echo 'bounverif:bounverif' | chpasswd \
     printf "%s ALL= NOPASSWD: ALL\\n" bounverif >> /etc/sudoers
 
-ENV \
-ROS_DISTRO=humble \
-AUTOWARE_ROOT=/root/autoware \
-AUTOWARE_SOURCE_DIR=/root/autoware/src \
-AUTOWARE_BUILD_DIR=/root/autoware/build \
-AUTOWARE_INSTALL_DIR=/opt/autoware \
-AUTOWARE_DATA_DIR=/opt/autoware/data
+ENV ROS_DISTRO=humble
+ENV AUTOWARE_DEVEL_ROOT=/root/autoware
+ENV AUTOWARE_DEVEL_SOURCE_DIR=/root/autoware/src
+ENV AUTOWARE_DEVEL_BUILD_DIR=/root/autoware/build
+ENV AUTOWARE_DEVEL_INSTALL_DIR=/root/autoware/autoware
+ENV AUTOWARE_DEVEL_DATA_DIR=/root/autoware/data
 
 ARG AUTOWARE_VERSION
+ENV AUTOWARE_VERSION=${AUTOWARE_VERSION:-latest}
 ENV AUTOWARE_DEVEL_VERSION=${AUTOWARE_VERSION:-latest}
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-base AS autoware-source
@@ -72,9 +72,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
         python3-vcstool \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
-RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autoware/autoware.repos.yml \
-    mkdir -p ${AUTOWARE_SOURCE_DIR} && \
-    vcs import --shallow ${AUTOWARE_SOURCE_DIR} < /etc/autoware/autoware.repos.yml
+COPY etc/autoware/autoware.repos.yml /etc/autoware/autoware.repos.yml
+
+RUN mkdir -p ${AUTOWARE_DEVEL_SOURCE_DIR} && \
+    vcs import --shallow ${AUTOWARE_DEVEL_SOURCE_DIR} < /etc/autoware/autoware.repos.yml
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-base AS autoware-builder
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
@@ -95,20 +96,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
         python3-colcon-common-extensions \
         ansible-core \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
-
-RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=${AUTOWARE_SOURCE_DIR} \
-    --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
-    mkdir -p /etc/autoware && \
-    vcs export --exact ${AUTOWARE_SOURCE_DIR} > /etc/autoware/autoware.repos.${AUTOWARE_DEVEL_VERSION}.yml && \
-    export DEBIAN_FRONTEND=noninteractive && \
-    apt-get update && \
-    rosdep init && \
-    rosdep update -q && \
-    rosdep install -qy \
-        --from-paths ${AUTOWARE_SOURCE_DIR} \
-        --ignore-src \
-        --rosdistro ${ROS_DISTRO} \
-    && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* 
 
 # CUDA Toolkit Installation
 ARG CUDA_TOOLKIT_VERSION_MAJOR=12 
@@ -131,6 +118,20 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
 
 RUN update-alternatives --set cuda /usr/local/cuda-${CUDA_TOOLKIT_VERSION_MAJOR}.${CUDA_TOOLKIT_VERSION_MINOR}
 
+RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_DEVEL_SOURCE_DIR},target=${AUTOWARE_DEVEL_SOURCE_DIR} \
+    --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
+    mkdir -p /etc/autoware && \
+    vcs export --exact ${AUTOWARE_DEVEL_SOURCE_DIR} > /etc/autoware/autoware.repos.${AUTOWARE_DEVEL_VERSION}.yml && \
+    export DEBIAN_FRONTEND=noninteractive && \
+    apt-get update && \
+    rosdep init && \
+    rosdep update -q && \
+    rosdep install -qy \
+        --from-paths ${AUTOWARE_DEVEL_SOURCE_DIR} \
+        --ignore-src \
+        --rosdistro ${ROS_DISTRO} \
+    && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* 
+
 # Build environment management
 ENV \
 CMAKE_BUILD_TYPE=Release \
@@ -149,9 +150,9 @@ ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 # This build is only for producing a build cache to be saved in the image.
 # Hence, we do not want build artifacts and logs.
 #
-RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=${AUTOWARE_SOURCE_DIR} \
+RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_DEVEL_SOURCE_DIR},target=${AUTOWARE_DEVEL_SOURCE_DIR} \
     mkdir -p /tmp/autoware && \
-    ln -s ${AUTOWARE_SOURCE_DIR} /tmp/autoware/src && \
+    ln -s ${AUTOWARE_DEVEL_SOURCE_DIR} /tmp/autoware/src && \
     . /opt/ros/${ROS_DISTRO}/setup.sh && \
     export CCACHE_BASEDIR=/tmp/autoware && \
     colcon --log-base /dev/null build \
@@ -172,7 +173,8 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_SOURCE_DIR},target=
         --cmake-args \
             " -Wno-dev" \
             " --no-warn-unused-cli" \
-    && rm -rf /tmp/autoware/
+    && rm -rf /tmp/autoware/ \
+    && ccache --zero-stats
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-builder-with-cache AS autoware-devel
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT

@@ -33,10 +33,6 @@ repositories:
     type: git
     url: https://github.com/autowarefoundation/autoware.core.git
     version: main
-  core/external/autoware_auto_msgs: # TODO(mfc): Remove when autoware_msgs is merged
-    type: git
-    url: https://github.com/tier4/autoware_auto_msgs.git
-    version: tier4/main
   # universe
   universe/autoware.universe:
     type: git
@@ -122,18 +118,18 @@ repositories:
   #   url: https://github.com/autowarefoundation/awsim_labs_sensor_kit_launch.git
   #   version: main
   # vehicle
-  vehicle/sample_vehicle_launch:
-    type: git
-    url: https://github.com/autowarefoundation/sample_vehicle_launch.git
-    version: main
-  vehicle/external/pacmod_interface:
-    type: git
-    url: https://github.com/tier4/pacmod_interface.git
-    version: main
-  vehicle/external/pacmod3_msgs:
-    type: git
-    url: https://github.com/astuff/pacmod3_msgs.git
-    version: 1.0.0
+  # vehicle/sample_vehicle_launch:
+  #   type: git
+  #   url: https://github.com/autowarefoundation/sample_vehicle_launch.git
+  #   version: main
+  # vehicle/external/pacmod_interface:
+  #   type: git
+  #   url: https://github.com/tier4/pacmod_interface.git
+  #   version: main
+  # vehicle/external/pacmod3_msgs:
+  #   type: git
+  #   url: https://github.com/astuff/pacmod3_msgs.git
+  #   version: 1.0.0
   # param
   param/autoware_individual_params:
     type: git
