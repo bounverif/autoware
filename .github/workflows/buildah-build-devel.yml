@@ -2,7 +2,7 @@ name: buildah-build-devel
 on:
   workflow_dispatch:
   schedule:
-    - cron: "30 12 * * 0" # 12:30 UTC every Sunday
+    - cron: "41 19 * * *" # 19:41 UTC everyday
   push:
     paths:
       - .github/workflows/buildah-build-devel.yml # Self-trigger

@@ -2,7 +2,7 @@ name: buildah-build-runtime
 on:
   workflow_dispatch:
   schedule:
-    - cron: '30 16 * * 1-5' # 16:30 UTC every weekday
+    - cron: '30 0 * * 5' # 00:30 UTC every Friday
   push:
     paths:
       - .github/workflows/buildah-build-runtime.yml # Self-trigger
