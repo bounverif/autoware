@@ -1,3 +1,4 @@
+name: ghcr-retention
 on:
   workflow_dispatch:
   schedule:
@@ -19,4 +20,4 @@ jobs:
           image-names: "autoware"
           image-tags: "!latest-*"
           cut-off: 2w
-          dry-run: true
+          dry-run: false
