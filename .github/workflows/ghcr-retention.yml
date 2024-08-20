@@ -31,4 +31,4 @@ jobs:
           image-names: "autoware"
           tag-selection: untagged
           cut-off: 1h
-          dry-run: true
+          dry-run: false

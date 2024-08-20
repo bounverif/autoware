@@ -8,7 +8,7 @@ The image `ghcr.io/bounverif/autoware:latest-builder` provides a build environme
 
 The image `ghcr.io/bounverif/autoware:latest-builder-with-cache` additionally includes a buildcache to speed up your Autoware builds.
 
-These images are built weekly and recommended for the CI use.
+These images are built daily and recommended for the CI use.
 
 ### Devel images
 
