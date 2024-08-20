@@ -1,0 +1,22 @@
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 12 * * 0"
+
+permissions:
+  contents: read
+  packages: write
+  
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    name: Delete old container images
+    steps:
+      - uses: snok/container-retention-policy@v3.0.0
+        with:
+          account: bounverif
+          token: ${{ secrets.GITHUB_TOKEN }}
+          image-names: "autoware"
+          image-tags: "!latest-*"
+          cut-off: 2w
+          dry-run: true
