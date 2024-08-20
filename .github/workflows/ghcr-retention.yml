@@ -19,16 +19,16 @@ jobs:
           account: bounverif
           token: ${{ secrets.GITHUB_TOKEN }}
           image-names: "autoware"
-          image-tags: "!latest-*"
+          image-tags: "!latest*"
           cut-off: 2w
           dry-run: false
 
-      - name: Clean up untagged images
+      - name: Clean up untagged Autoware images
         uses: snok/container-retention-policy@v3.0.0
         with:
           account: bounverif
           token: ${{ secrets.GITHUB_TOKEN }}
-          image-names: "*"
+          image-names: "autoware"
           tag-selection: untagged
           cut-off: 1h
           dry-run: true
