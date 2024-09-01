@@ -31,6 +31,7 @@ jobs:
           mkdir -p src
           export CCACHE_BASEDIR=${PWD}
           export CCACHE_READONLY=1
+          export CCACHE_SLOPPINESS=include_file_ctime,include_file_mtime
           ccache --show-config
           vcs import src --shallow --input autoware.repos
           . /opt/ros/humble/setup.sh
