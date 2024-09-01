@@ -34,5 +34,5 @@ jobs:
           vcs import src --shallow --input autoware.repos
           . /opt/ros/humble/setup.sh
           ccache --zero-stats
-          colcon build --packages-up-to ${{ matrix.package }} --cmake-args -DCMAKE_BUILD_TYPE=Release
+          colcon build --packages-up-to ${{ matrix.package }}
           ccache -v --show-stats
