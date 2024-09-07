@@ -76,11 +76,11 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
 RUN git clone https://github.com/autowarefoundation/autoware --depth=1 ${AUTOWARE_DEVEL_ROOT} && \
     mkdir -p ${AUTOWARE_DEVEL_SOURCE_DIR} && \
     vcs import ${AUTOWARE_DEVEL_SOURCE_DIR}\
-        # --shallow doesn't work if repos use commit refs 
-        # --shallow 
+        --shallow \
         --input ${AUTOWARE_DEVEL_ROOT}/autoware.repos \
         && \
     rm -rf ${AUTOWARE_DEVEL_SOURCE_DIR}/universe/external/morai_msgs && \
+    rm -rf ${AUTOWARE_DEVEL_SOURCE_DIR}/vehicle && \
     du --human-readable --max-depth 2 ${AUTOWARE_DEVEL_SOURCE_DIR}
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-base AS autoware-builder
