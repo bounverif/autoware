@@ -78,10 +78,7 @@ RUN git clone https://github.com/autowarefoundation/autoware --depth=1 ${AUTOWAR
         --shallow \
         --input ${AUTOWARE_DEVEL_ROOT}/autoware.repos \
         && \
-    # rm -rf ${AUTOWARE_DEVEL_SOURCE_DIR}/vehicle && \
-    # rm -rf ${AUTOWARE_DEVEL_SOURCE_DIR}/sensor_kit && \
-    # rm -rf ${AUTOWARE_DEVEL_SOURCE_DIR}/universe/external/morai_msgs && \
-    ls -la ${AUTOWARE_DEVEL_SOURCE_DIR}
+    tree -L 2 ${AUTOWARE_DEVEL_SOURCE_DIR}
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-base AS autoware-builder
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
