@@ -79,6 +79,7 @@ RUN git clone https://github.com/autowarefoundation/autoware --depth=1 ${AUTOWAR
         --shallow \
         --input ${AUTOWARE_DEVEL_ROOT}/autoware.repos \
         && \
+    rm -rf ${AUTOWARE_DEVEL_SOURCE_DIR}/universe/external/morai_msgs && \
     du --human-readable --max-depth 2 ${AUTOWARE_DEVEL_SOURCE_DIR}
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-base AS autoware-builder
