@@ -26,6 +26,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
     apt-get update -qq && \
     apt-get install -qy --no-install-recommends \
         sudo \
+        curl \
         wget \
         gnupg2 \
         ca-certificates \
@@ -51,10 +52,10 @@ RUN groupadd bounverif -g 1000 && \
 
 ENV ROS_DISTRO=humble
 ENV AUTOWARE_DEVEL_ROOT=/root/autoware
-ENV AUTOWARE_DEVEL_SOURCE_DIR=/root/autoware/src
-ENV AUTOWARE_DEVEL_BUILD_DIR=/root/autoware/build
-ENV AUTOWARE_DEVEL_INSTALL_DIR=/root/autoware/autoware
-ENV AUTOWARE_DEVEL_DATA_DIR=/root/autoware/data
+ENV AUTOWARE_DEVEL_SOURCE_DIR=${AUTOWARE_DEVEL_ROOT}/src
+ENV AUTOWARE_DEVEL_BUILD_DIR=${AUTOWARE_DEVEL_ROOT}/build
+ENV AUTOWARE_DEVEL_INSTALL_DIR=${AUTOWARE_DEVEL_ROOT}/install
+ENV AUTOWARE_DEVEL_DATA_DIR=${AUTOWARE_DEVEL_ROOT}/data
 
 ARG AUTOWARE_VERSION
 ENV AUTOWARE_VERSION=${AUTOWARE_VERSION:-latest}
@@ -72,10 +73,15 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
         python3-vcstool \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
-COPY etc/autoware/autoware.repos.yml /etc/autoware/autoware.repos.yml
-
-RUN mkdir -p ${AUTOWARE_DEVEL_SOURCE_DIR} && \
-    vcs import --shallow ${AUTOWARE_DEVEL_SOURCE_DIR} < /etc/autoware/autoware.repos.yml
+RUN git clone https://github.com/autowarefoundation/autoware --depth=1 ${AUTOWARE_DEVEL_ROOT} && \
+    mkdir -p ${AUTOWARE_DEVEL_SOURCE_DIR} && \
+    vcs import ${AUTOWARE_DEVEL_SOURCE_DIR}\
+        --shallow \
+        --input ${AUTOWARE_DEVEL_ROOT}/autoware.repos \
+        && \
+    rm -rf ${AUTOWARE_DEVEL_SOURCE_DIR}/universe/external/morai_msgs && \
+    rm -rf ${AUTOWARE_DEVEL_SOURCE_DIR}/vehicle && \
+    du --human-readable --max-depth 2 ${AUTOWARE_DEVEL_SOURCE_DIR}
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-base AS autoware-builder
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
@@ -94,7 +100,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
         python3-rosdep \
         python3-colcon-core \
         python3-colcon-common-extensions \
-        ansible-core \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 # CUDA Toolkit Installation
@@ -166,7 +171,7 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_DEVEL_SOURCE_DIR},t
             console_stderr+ \
             console_cohesion- \
             console_start_end- \
-            console_package_list- \
+            console_package_list+ \
             status- \
             summary+ \
             desktop_notification- \
