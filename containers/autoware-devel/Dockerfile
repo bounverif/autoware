@@ -26,6 +26,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
     apt-get update -qq && \
     apt-get install -qy --no-install-recommends \
         sudo \
+        curl \
         wget \
         gnupg2 \
         ca-certificates \
@@ -78,7 +79,7 @@ RUN git clone https://github.com/autowarefoundation/autoware --depth=1 ${AUTOWAR
         --shallow \
         --input ${AUTOWARE_DEVEL_ROOT}/autoware.repos \
         && \
-    tree -L 2 ${AUTOWARE_DEVEL_SOURCE_DIR}
+    du --human-readable --max-depth 2 ${AUTOWARE_DEVEL_SOURCE_DIR}
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-base AS autoware-builder
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
@@ -97,7 +98,6 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
         python3-rosdep \
         python3-colcon-core \
         python3-colcon-common-extensions \
-        ansible-core \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 # CUDA Toolkit Installation
