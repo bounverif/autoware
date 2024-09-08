@@ -152,8 +152,8 @@ COPY etc/ccache.conf /etc/ccache.conf
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-builder AS autoware-builder-with-cache
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 #
-# This build is only for producing a build cache to be saved in the image.
-# Hence, we do not want build artifacts and logs.
+# This build is only for producing a cache to be distributed with the image.
+# Hence, we will not use logs, build, and install artifacts here.
 #
 RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_DEVEL_SOURCE_DIR},target=${AUTOWARE_DEVEL_SOURCE_DIR} \
     mkdir -p /tmp/autoware && \
@@ -164,7 +164,7 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_DEVEL_SOURCE_DIR},t
         --base-paths /tmp/autoware/src \
         --build-base /tmp/autoware/build \
         --install-base /tmp/autoware/install \
-        --packages-up-to autoware_launch \
+        # --packages-up-to autoware_launch \
         --parallel-workers 4 \
         --event-handlers \
             console_direct- \
