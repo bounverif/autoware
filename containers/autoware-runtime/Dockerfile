@@ -4,13 +4,16 @@ ARG AUTOWARE_VERSION=latest
 FROM ${IMAGE_NAME}:latest-builder-with-cache AS autoware-prebuilt
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
+ARG AUTOWARE_SOURCE_REPO=https://github.com/autowarefoundation/autoware
 ARG AUTOWARE_PACKAGES_UP_TO=autoware_launch
 
 WORKDIR ${AUTOWARE_DEVEL_ROOT}
 
-RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autoware/autoware.repos.yml set -ex \
-    ; mkdir -p src \
-    ; vcs import --shallow src --input /etc/autoware/autoware.repos.yml \
+RUN git clone ${AUTOWARE_SOURCE_REPO} --depth=1 ${AUTOWARE_DEVEL_ROOT} \
+    ; mkdir -p ${AUTOWARE_DEVEL_SOURCE_DIR} && \
+        vcs import ${AUTOWARE_DEVEL_SOURCE_DIR}\
+        --shallow \
+        --input ${AUTOWARE_DEVEL_ROOT}/autoware.repos \
     ; . /opt/ros/${ROS_DISTRO}/setup.sh \
     ; ccache --show-config \
     ; ccache --zero-stats \
@@ -22,7 +25,7 @@ RUN --mount=type=bind,source=etc/autoware/autoware.repos.yml,target=/etc/autowar
             console_stderr+ \
             console_cohesion- \
             console_start_end- \
-            console_package_list- \
+            console_package_list+ \
             status- \
             summary+ \
             desktop_notification- \
