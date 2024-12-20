@@ -15,6 +15,8 @@ org.opencontainers.image.licenses="Apache-2.0" \
 org.opencontainers.image.ref.name="autoware" \
 org.opencontainers.image.base.name="docker.io/library/ubuntu"
 
+COPY etc/autoware/VERSION /etc/autoware/VERSION
+
 # Debian containers save no deb archives by default. 
 # The following command disables clean-up actions to enable
 #   --mount=type=cache,target=/var/cache/apt 
@@ -25,11 +27,11 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update -qq && \
     apt-get install -qy --no-install-recommends \
-        sudo \
-        curl \
-        wget \
-        gnupg2 \
-        ca-certificates \
+      sudo \
+      curl \
+      wget \
+      gnupg2 \
+      ca-certificates \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 RUN wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" | gpg --dearmour -o /usr/share/keyrings/ros-archive-keyring.gpg && \
@@ -55,15 +57,17 @@ ENV AUTOWARE_DEVEL_ROOT=/root/autoware
 ENV AUTOWARE_DEVEL_SOURCE_DIR=${AUTOWARE_DEVEL_ROOT}/src
 ENV AUTOWARE_DEVEL_BUILD_DIR=${AUTOWARE_DEVEL_ROOT}/build
 ENV AUTOWARE_DEVEL_INSTALL_DIR=${AUTOWARE_DEVEL_ROOT}/install
+ENV AUTOWARE_SOURCE_REPO=https://github.com/autowarefoundation/autoware
+ENV AUTOWARE_BUILD_PACKAGES_UP_TO=autoware_launch
 
 ARG AUTOWARE_VERSION
 ENV AUTOWARE_VERSION=${AUTOWARE_VERSION:-latest}
 ENV AUTOWARE_DEVEL_VERSION=${AUTOWARE_VERSION:-latest}
 
-ARG CUDA_TOOLKIT_VERSION_MAJOR 
-ARG CUDA_TOOLKIT_VERSION_MINOR
-ENV CUDA_TOOLKIT_VERSION_MAJOR=${CUDA_TOOLKIT_VERSION_MAJOR:-12}
-ENV CUDA_TOOLKIT_VERSION_MINOR=${CUDA_TOOLKIT_VERSION_MINOR:-6}
+ARG CUDA_TOOLKIT_VERSION_MAJOR=12
+ARG CUDA_TOOLKIT_VERSION_MINOR=6
+ENV CUDA_TOOLKIT_VERSION_MAJOR=${CUDA_TOOLKIT_VERSION_MAJOR}
+ENV CUDA_TOOLKIT_VERSION_MINOR=${CUDA_TOOLKIT_VERSION_MINOR}
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-base AS autoware-source
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
@@ -72,17 +76,17 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update -qq && \
     apt-get install -qqy --no-install-recommends \
-        git \
-        python3-minimal \
-        python3-vcstool \
+      git \
+      python3-minimal \
+      python3-vcstool \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 RUN git clone https://github.com/autowarefoundation/autoware --depth=1 ${AUTOWARE_DEVEL_ROOT} && \
     mkdir -p ${AUTOWARE_DEVEL_SOURCE_DIR} && \
     vcs import ${AUTOWARE_DEVEL_SOURCE_DIR}\
-        --shallow \
-        --input ${AUTOWARE_DEVEL_ROOT}/autoware.repos \
-        && \
+      --shallow \
+      --input ${AUTOWARE_DEVEL_ROOT}/autoware.repos \
+      && \
     rm -rf ${AUTOWARE_DEVEL_SOURCE_DIR}/universe/external/morai_msgs && \
     rm -rf ${AUTOWARE_DEVEL_SOURCE_DIR}/vehicle && \
     du --human-readable --max-depth 2 ${AUTOWARE_DEVEL_SOURCE_DIR}
@@ -94,16 +98,16 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update -qq && \
     apt-get install -qqy --no-install-recommends \
-        build-essential \
-        git \
-        cmake \
-        ccache \
-        ninja-build \
-        python3-minimal \
-        python3-vcstool \
-        python3-rosdep \
-        python3-colcon-core \
-        python3-colcon-common-extensions \
+      build-essential \
+      git \
+      cmake \
+      ccache \
+      ninja-build \
+      python3-minimal \
+      python3-vcstool \
+      python3-rosdep \
+      python3-colcon-core \
+      python3-colcon-common-extensions \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 # CUDA Toolkit Installation
@@ -111,16 +115,16 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update -qq && \
     apt-get install -qy --no-install-recommends \
-        cuda-minimal-build-${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR} \
-        libcublas-dev-${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR} \
-        libcurand-dev-${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR} \
-        libcusolver-dev-${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR} \
-        libnvinfer-dev=8.* \
-        libnvinfer-headers-dev=8.* \
-        libnvinfer-plugin-dev=8.* \
-        libnvinfer-headers-plugin-dev=8.* \
-        libnvparsers-dev=8.* \
-        libnvonnxparsers-dev=8.* \
+      cuda-minimal-build-${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR} \
+      libcublas-dev-${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR} \
+      libcurand-dev-${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR} \
+      libcusolver-dev-${CUDA_TOOLKIT_VERSION_MAJOR}-${CUDA_TOOLKIT_VERSION_MINOR} \
+      libnvinfer-dev=8.* \
+      libnvinfer-headers-dev=8.* \
+      libnvinfer-plugin-dev=8.* \
+      libnvinfer-headers-plugin-dev=8.* \
+      libnvparsers-dev=8.* \
+      libnvonnxparsers-dev=8.* \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 RUN update-alternatives --set cuda /usr/local/cuda-${CUDA_TOOLKIT_VERSION_MAJOR}.${CUDA_TOOLKIT_VERSION_MINOR}
@@ -134,9 +138,9 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_DEVEL_SOURCE_DIR},t
     rosdep init && \
     rosdep update -q && \
     rosdep install -qy \
-        --from-paths ${AUTOWARE_DEVEL_SOURCE_DIR} \
-        --ignore-src \
-        --rosdistro ${ROS_DISTRO} \
+      --from-paths ${AUTOWARE_DEVEL_SOURCE_DIR} \
+      --ignore-src \
+      --rosdistro ${ROS_DISTRO} \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* 
 
 # Build environment management
@@ -162,23 +166,22 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_DEVEL_SOURCE_DIR},t
     . /opt/ros/${ROS_DISTRO}/setup.sh && \
     export CCACHE_BASEDIR=/tmp/autoware && \
     colcon --log-base /dev/null build \
-        --base-paths /tmp/autoware/src \
-        --build-base /tmp/autoware/build \
-        --install-base /tmp/autoware/install \
-        # --packages-up-to autoware_launch \
-        --parallel-workers 4 \
-        --event-handlers \
-            console_direct- \
-            console_stderr+ \
-            console_cohesion- \
-            console_start_end- \
-            console_package_list+ \
-            status- \
-            summary+ \
-            desktop_notification- \
-        --cmake-args \
-            " -Wno-dev" \
-            " --no-warn-unused-cli" \
+      --base-paths /tmp/autoware/src \
+      --build-base /tmp/autoware/build \
+      --install-base /tmp/autoware/install \
+      --parallel-workers 4 \
+      --event-handlers \
+          console_direct- \
+          console_stderr+ \
+          console_cohesion- \
+          console_start_end- \
+          console_package_list+ \
+          status- \
+          summary+ \
+          desktop_notification- \
+      --cmake-args \
+          " -Wno-dev" \
+          " --no-warn-unused-cli" \
     && rm -rf /tmp/autoware/ \
     && ccache --zero-stats
 
@@ -189,7 +192,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
     export DEBIAN_FRONTEND=noninteractive && \
     apt-get update -qq && \
     apt-get install -qy --no-install-recommends \
-        nano \
+      nano \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
 COPY etc/autoware/entrypoint.devel.sh /etc/autoware/entrypoint.devel.sh

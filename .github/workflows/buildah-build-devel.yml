@@ -45,6 +45,9 @@ jobs:
       - name: Set current date as the version
         run: echo "AUTOWARE_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
+      - name: Create VERSION file for the container
+        run: echo $AUTOWARE_VERSION > containers/etc/autoware/VERSION 
+
       - name: Log in to the GitHub Container registry
         uses: redhat-actions/podman-login@v1
         with:
