@@ -71,6 +71,7 @@ jobs:
             --target autoware-base
           containerfiles: |
             containers/autoware-devel/Dockerfile
+          context: containers
 
       - name: Build builder container image
         id: build-builder
@@ -87,6 +88,7 @@ jobs:
             --target autoware-builder
           containerfiles: |
             containers/autoware-devel/Dockerfile
+          context: containers
 
       - name: Build builder-with-cache container image
         id: build-builder-with-cache
@@ -103,6 +105,7 @@ jobs:
             --target autoware-builder-with-cache
           containerfiles: |
             containers/autoware-devel/Dockerfile
+          context: containers
 
       - name: Build devel container image
         id: build-devel
@@ -119,6 +122,7 @@ jobs:
             --target autoware-devel
           containerfiles: |
             containers/autoware-devel/Dockerfile
+          context: containers
 
       - name: Push to GitHub Container Repository
         if: github.ref == 'refs/heads/main'
