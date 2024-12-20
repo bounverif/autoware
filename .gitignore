@@ -4,3 +4,6 @@ build/
 log/
 install/
 debug/
+
+# Autoware
+/containers/etc/autoware/VERSION
