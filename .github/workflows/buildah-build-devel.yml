@@ -47,6 +47,7 @@ jobs:
 
       - name: Create VERSION file for the container
         run: |
+          mkdir -p containers/etc/autoware
           echo ${{ env.AUTOWARE_VERSION }} > containers/etc/autoware/VERSION
 
       - name: Log in to the GitHub Container registry
