@@ -4,10 +4,11 @@ CONTEXT ?= .
 
 info:
 	echo "Autoware version: ${AUTOWARE_VERSION}"
+	echo "${AUTOWARE_VERSION}" > etc/autoware/VERSION
 
-base:
+base: info
 	buildah build \
-		-f containers/autoware-devel/Dockerfile \
+		-f autoware-devel/Dockerfile \
 		--build-arg IMAGE_NAME=${IMAGE_NAME} \
 		--build-arg AUTOWARE_VERSION=${AUTOWARE_VERSION} \
 		--layers=true \
@@ -18,7 +19,7 @@ base:
 
 builder: base
 	buildah build \
-		-f containers/autoware-devel/Dockerfile \
+		-f autoware-devel/Dockerfile \
 		--build-arg IMAGE_NAME=${IMAGE_NAME} \
 		--build-arg AUTOWARE_VERSION=${AUTOWARE_VERSION} \
 		--layers=true \
@@ -29,18 +30,19 @@ builder: base
 
 builder-with-cache: builder
 	buildah build \
-		-f containers/autoware-devel/Dockerfile \
+		-f autoware-devel/Dockerfile \
 		--build-arg IMAGE_NAME=${IMAGE_NAME} \
 		--build-arg AUTOWARE_VERSION=${AUTOWARE_VERSION} \
 		--layers=true \
 		--target autoware-builder-with-cache \
 		--tag autoware:latest-builder-with-cache \
 		--tag autoware:${AUTOWARE_VERSION}-builder-with-cache \
+		--memory 24G \
 	${CONTEXT}
 
 devel: builder-with-cache
 	buildah build \
-		-f containers/autoware-devel/Dockerfile \
+		-f autoware-devel/Dockerfile \
 		--build-arg IMAGE_NAME=${IMAGE_NAME} \
 		--build-arg AUTOWARE_VERSION=${AUTOWARE_VERSION} \
 		--format oci \
@@ -52,12 +54,13 @@ devel: builder-with-cache
 
 runtime: builder-with-cache
 	buildah build \
-		-f containers/autoware-runtime/Dockerfile \
+		-f autoware-runtime/Dockerfile \
 		--build-arg IMAGE_NAME=${IMAGE_NAME} \
 		--build-arg AUTOWARE_VERSION=${AUTOWARE_VERSION} \
 		--format oci \
 		--layers=true \
 		--target autoware-runtime \
+		--tag autoware:latest \
 		--tag autoware:latest-runtime \
 		--tag autoware:${AUTOWARE_VERSION}-runtime \
 	${CONTEXT}
