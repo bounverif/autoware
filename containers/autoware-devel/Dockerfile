@@ -6,7 +6,7 @@ ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
 # Metadata
 LABEL \
-org.opencontainers.image.vendor="tr.edu.bogazici.cmpe.bounverif" \
+org.opencontainers.image.vendor="tr.edu.bogazici.bounverif" \
 org.opencontainers.image.authors="Bogazici University System Verification Group" \
 org.opencontainers.image.source="https://github.com/bounverif/autoware" \
 org.opencontainers.image.title="Autoware" \
@@ -17,7 +17,7 @@ org.opencontainers.image.base.name="docker.io/library/ubuntu"
 
 # This is a workaround to bust container build cache
 # Change the value of the VERSION file to rebuild the image
-COPY etc/autoware/VERSION /etc/autoware/VERSION
+COPY etc/autoware/VERSION /etc/autoware/DEVEL_VERSION
 
 # Debian containers save no deb archives by default. 
 # The following command disables clean-up actions to enable
@@ -83,7 +83,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
       python3-vcstool \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
-RUN git clone https://github.com/autowarefoundation/autoware --depth=1 ${AUTOWARE_DEVEL_ROOT} && \
+RUN git clone ${AUTOWARE_SOURCE_REPO} --depth=1 ${AUTOWARE_DEVEL_ROOT} && \
     mkdir -p ${AUTOWARE_DEVEL_SOURCE_DIR} && \
     vcs import ${AUTOWARE_DEVEL_SOURCE_DIR}\
       --shallow \
@@ -92,6 +92,8 @@ RUN git clone https://github.com/autowarefoundation/autoware --depth=1 ${AUTOWAR
     rm -rf ${AUTOWARE_DEVEL_SOURCE_DIR}/universe/external/morai_msgs && \
     rm -rf ${AUTOWARE_DEVEL_SOURCE_DIR}/vehicle && \
     du --human-readable --max-depth 2 ${AUTOWARE_DEVEL_SOURCE_DIR}
+
+WORKDIR ${HOME}
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-base AS autoware-builder
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
@@ -143,7 +145,9 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_DEVEL_SOURCE_DIR},t
       --from-paths ${AUTOWARE_DEVEL_SOURCE_DIR} \
       --ignore-src \
       --rosdistro ${ROS_DISTRO} \
-    && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* 
+    && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
+
+COPY autoware-devel/build-autoware.sh /opt/autoware/bin/build-autoware.sh
 
 # Build environment management
 ENV CMAKE_BUILD_TYPE=Release 
@@ -154,10 +158,15 @@ ENV CMAKE_EXPORT_COMPILE_COMMANDS=ON
 ENV CMAKE_GENERATOR=Ninja
 
 # Ccache configuration
-COPY etc/ccache.conf /etc/ccache.conf
+ENV CCACHE_DIR=/var/cache/ccache
+ENV CCACHE_BASEDIR=${AUTOWARE_DEVEL_ROOT}
+ENV CCACHE_UMASK=002
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-builder AS autoware-builder-with-cache
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
+
+ARG AUTOWARE_DEVEL_COLCON_EXTRA_ARGS
+
 #
 # This build is only for producing a cache to be distributed with the image.
 # Hence, we will not use logs, build, and install artifacts here.
@@ -184,11 +193,22 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_DEVEL_SOURCE_DIR},t
       --cmake-args \
           " -Wno-dev" \
           " --no-warn-unused-cli" \
+      ${AUTOWARE_DEVEL_COLCON_EXTRA_ARGS} \
     && rm -rf /tmp/autoware/ \
     && ccache --zero-stats
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-builder-with-cache AS autoware-devel
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
+
+USER bounverif
+WORKDIR ${HOME}
+
+ENV AUTOWARE_DEVEL_ROOT=${HOME}/autoware
+ENV AUTOWARE_DEVEL_SOURCE_DIR=${AUTOWARE_DEVEL_ROOT}/src
+ENV AUTOWARE_DEVEL_BUILD_DIR=${AUTOWARE_DEVEL_ROOT}/build
+ENV AUTOWARE_DEVEL_INSTALL_DIR=${AUTOWARE_DEVEL_ROOT}/install
+
+ENV CCACHE_READONLY=true
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}/var/cache/apt \
     export DEBIAN_FRONTEND=noninteractive && \
@@ -199,8 +219,5 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
 
 COPY autoware-devel/entrypoint.devel.sh /etc/autoware/entrypoint.sh
 RUN chmod +x /etc/autoware/entrypoint.sh
-
-USER bounverif
-WORKDIR /home/bounverif
 
 ENTRYPOINT ["/etc/autoware/entrypoint.sh"]
