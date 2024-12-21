@@ -15,6 +15,8 @@ org.opencontainers.image.licenses="Apache-2.0" \
 org.opencontainers.image.ref.name="autoware" \
 org.opencontainers.image.base.name="docker.io/library/ubuntu"
 
+# This is a workaround to bust container build cache
+# Change the value of the VERSION file to rebuild the image
 COPY etc/autoware/VERSION /etc/autoware/VERSION
 
 # Debian containers save no deb archives by default. 
@@ -195,10 +197,10 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
       nano \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
-COPY etc/autoware/entrypoint.devel.sh /etc/autoware/entrypoint.devel.sh
-RUN chmod +x /etc/autoware/entrypoint.devel.sh
+COPY autoware-devel/entrypoint.devel.sh /etc/autoware/entrypoint.sh
+RUN chmod +x /etc/autoware/entrypoint.sh
 
 USER bounverif
 WORKDIR /home/bounverif
 
-ENTRYPOINT ["/etc/autoware/entrypoint.devel.sh"]
+ENTRYPOINT ["/etc/autoware/entrypoint.sh"]

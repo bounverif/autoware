@@ -6,7 +6,7 @@ on:
   push:
     paths:
       - .github/workflows/buildah-build-devel.yml # Self-trigger
-      - containers/autoware-devel/Dockerfile
+      - containers/autoware-devel/**
 
 env:
   REGISTRY: ghcr.io/bounverif
