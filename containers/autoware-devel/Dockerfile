@@ -207,6 +207,9 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
       nano \
     && apt-get autoremove -y && rm -rf /var/lib/apt/lists/*
 
+COPY autoware-devel/entrypoint.devel.sh /etc/autoware/entrypoint.sh
+RUN chmod +x /etc/autoware/entrypoint.sh
+
 USER bounverif
 WORKDIR ${HOME}
 
@@ -216,8 +219,5 @@ ENV AUTOWARE_DEVEL_BUILD_DIR=${AUTOWARE_DEVEL_ROOT}/build
 ENV AUTOWARE_DEVEL_INSTALL_DIR=${AUTOWARE_DEVEL_ROOT}/install
 
 ENV CCACHE_READONLY=true
-
-COPY autoware-devel/entrypoint.devel.sh /etc/autoware/entrypoint.sh
-RUN chmod +x /etc/autoware/entrypoint.sh
 
 ENTRYPOINT ["/etc/autoware/entrypoint.sh"]
