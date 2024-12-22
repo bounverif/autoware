@@ -93,8 +93,6 @@ RUN git clone ${AUTOWARE_SOURCE_REPO} --depth=1 ${AUTOWARE_DEVEL_ROOT} && \
     rm -rf ${AUTOWARE_DEVEL_SOURCE_DIR}/vehicle && \
     du --human-readable --max-depth 2 ${AUTOWARE_DEVEL_SOURCE_DIR}
 
-WORKDIR ${HOME}
-
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-base AS autoware-builder
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
@@ -149,6 +147,8 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_DEVEL_SOURCE_DIR},t
 
 COPY autoware-devel/build-autoware.sh /opt/autoware/bin/build-autoware.sh
 
+RUN git config --global advice.detachedHead false
+
 # Build environment management
 ENV CMAKE_BUILD_TYPE=Release 
 ENV CMAKE_C_COMPILER_LAUNCHER=ccache
@@ -160,6 +160,8 @@ ENV CMAKE_GENERATOR=Ninja
 # Ccache configuration
 ENV CCACHE_DIR=/var/cache/ccache
 ENV CCACHE_BASEDIR=${AUTOWARE_DEVEL_ROOT}
+ENV CCACHE_TEMPDIR=/tmp/ccache/
+ENV CCACHE_HASHDIR=false
 ENV CCACHE_UMASK=002
 
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-builder AS autoware-builder-with-cache
@@ -211,13 +213,20 @@ COPY autoware-devel/entrypoint.devel.sh /etc/autoware/entrypoint.sh
 RUN chmod +x /etc/autoware/entrypoint.sh
 
 USER bounverif
-WORKDIR ${HOME}
+WORKDIR /home/bounverif
 
-ENV AUTOWARE_DEVEL_ROOT=${HOME}/autoware
+ENV AUTOWARE_DEVEL_ROOT=/home/bounverif/autoware
 ENV AUTOWARE_DEVEL_SOURCE_DIR=${AUTOWARE_DEVEL_ROOT}/src
 ENV AUTOWARE_DEVEL_BUILD_DIR=${AUTOWARE_DEVEL_ROOT}/build
 ENV AUTOWARE_DEVEL_INSTALL_DIR=${AUTOWARE_DEVEL_ROOT}/install
 
-ENV CCACHE_READONLY=true
+# ENV CCACHE_BASEDIR=${AUTOWARE_DEVEL_ROOT}
+# ENV CCACHE_READONLY=true
+# ENV CCACHE_TEMPDIR=/home/bounverif/.ccache/tmp
+
+ENV CCACHE_BASEDIR=${AUTOWARE_DEVEL_ROOT}
+ENV CCACHE_DIR=/home/bounverif/.ccache
+ENV CCACHE_SECONDARY_STORAGE=file:///var/cache/ccache
 
 ENTRYPOINT ["/etc/autoware/entrypoint.sh"]
+CMD [ "/bin/bash" ]

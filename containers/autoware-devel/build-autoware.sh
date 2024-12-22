@@ -14,12 +14,8 @@ colcon --log-base /dev/null build \
     --parallel-workers "${AUTOWARE_BUILD_PARALLEL_WORKERS:-4}" \
     --merge-install \
     --event-handlers \
-        console_direct- \
-        console_stderr+ \
-        console_cohesion- \
-        console_start_end- \
-        console_package_list+ \
-        status- \
-        summary+ \
-        desktop_notification-
+        console_cohesion+ \
+    --cmake-args \
+        " -Wno-dev" \
+        " --no-warn-unused-cli" \
 ccache -v --show-stats
