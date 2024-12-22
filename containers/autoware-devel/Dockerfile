@@ -167,8 +167,6 @@ ENV CCACHE_UMASK=002
 FROM ${IMAGE_NAME}:${AUTOWARE_VERSION}-builder AS autoware-builder-with-cache
 ARG TARGETARCH TARGETOS TARGETPLATFORM TARGETVARIANT
 
-ARG AUTOWARE_DEVEL_COLCON_EXTRA_ARGS
-
 #
 # This build is only for producing a cache to be distributed with the image.
 # Hence, we will not use logs, build, and install artifacts here.
@@ -195,7 +193,6 @@ RUN --mount=type=bind,from=autoware-source,source=${AUTOWARE_DEVEL_SOURCE_DIR},t
       --cmake-args \
           " -Wno-dev" \
           " --no-warn-unused-cli" \
-      ${AUTOWARE_DEVEL_COLCON_EXTRA_ARGS} \
     && rm -rf /tmp/autoware/ \
     && ccache --zero-stats
 
