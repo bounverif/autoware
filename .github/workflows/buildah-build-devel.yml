@@ -31,6 +31,9 @@ jobs:
       cancel-in-progress: true
       
     steps:
+      - name: Install container tools
+        run: sudo apt-get install podman buildah jq
+        
       - name: Maximize build space
         uses: easimon/maximize-build-space@v10
         with:
