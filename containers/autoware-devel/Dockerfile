@@ -39,7 +39,11 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked,id=${TARGETPLATFORM}
 RUN wget -qO- "https://raw.githubusercontent.com/ros/rosdistro/master/ros.key" | gpg --dearmour -o /usr/share/keyrings/ros-archive-keyring.gpg && \
     echo "deb [signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu jammy main" > /etc/apt/sources.list.d/ros2.list
 
-RUN CUDA_ARCH=x86_64 && \
+RUN if [ "$TARGETARCH" = "amd64" ]; then \
+        CUDA_ARCH="x86_64"; \
+    elif [ "$TARGETARCH" = "arm64" ]; then \
+        CUDA_ARCH="sbsa"; \
+    fi && \
     CUDA_DISTRO=ubuntu2204 && \
     CUDA_KEYRING_PACKAGE=cuda-keyring_1.1-1_all.deb && \
     CUDA_TOOLKIT_REPOSITORY_URL=https://developer.download.nvidia.com/compute/cuda/repos && \
