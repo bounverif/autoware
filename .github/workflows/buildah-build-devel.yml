@@ -69,7 +69,6 @@ jobs:
         id: build-base
         uses: redhat-actions/buildah-build@v2
         with:
-          platforms: linux/amd64
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ env.AUTOWARE_VERSION }}-base latest-base
           layers: true
@@ -102,7 +101,6 @@ jobs:
         id: build-builder-with-cache
         uses: redhat-actions/buildah-build@v2
         with:
-          platforms: linux/amd64
           image: ${{ env.IMAGE_NAME }}
           tags: ${{ env.AUTOWARE_VERSION }}-builder-with-cache latest-builder-with-cache
           layers: true
