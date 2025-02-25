@@ -9,16 +9,19 @@ on:
 
 jobs:
   build-package-with-cache:
-    runs-on: ubuntu-latest
-    container:
-      image: ghcr.io/bounverif/autoware:latest-builder-with-cache
-
     strategy:
       fail-fast: false
       matrix:
+        os: 
+          - ubuntu-24.04
+          - ubuntu-24.04-arm
         package:
           - autoware_tensorrt_yolox
           - autoware_launch
+          
+    runs-on: ${{ matrix.os }}
+    container:
+      image: ghcr.io/bounverif/autoware:latest-builder-with-cache
 
     steps:
       - name: Checkout Autoware repository

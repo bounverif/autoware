@@ -211,6 +211,7 @@ jobs:
 
       - name: Prepare environment variables
         run: |
+          echo "AUTOWARE_VERSION=$(date +'%Y%m%d')" >> $GITHUB_ENV
           echo "CURRENT_DATE=$(date +'%Y%m%d')" >> $GITHUB_ENV
 
       - name: Create and push manifest list for autoware-base
@@ -271,5 +272,5 @@ jobs:
 
   test-builder-with-cache:
     if: github.ref == 'refs/heads/main'
-    needs: buildah-build
+    needs: buildah-merge
     uses: ./.github/workflows/test-builder-with-cache.yml
