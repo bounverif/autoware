@@ -196,7 +196,7 @@ jobs:
     if: github.ref == 'refs/heads/main' && always()
     steps:
       - name: Download digests
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           path: ${{ runner.temp }}/digests
           pattern: digest-*
